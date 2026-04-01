@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>うちの子</title>
+    <style>
+        body { background-color: #f5f5dc; font-family: 'Hiragino Maru Gothic ProN', sans-serif; padding: 20px; color: #333; text-align: center; }
+        h1 { font-size: 28px; margin-top: 30px; color: #556b2f; text-shadow: 1px 1px 2px #fff; }
+        .subtitle { font-size: 14px; margin-bottom: 30px; color: #666; }
+        .pet-selector { display: flex; justify-content: center; gap: 15px; margin-bottom: 35px; }
+        .pet-option { background: #fff; border: 2px solid #556b2f; padding: 10px 25px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 16px; box-shadow: 0 3px 0 #ccd4bb; transition: 0.2s; opacity: 0.6; }
+        .pet-option.active { background-color: #fff; opacity: 1; border: 3px solid #556b2f; transform: translateY(2px); box-shadow: 0 1px 0 #ccd4bb; }
+        .menu-container { display: grid; grid-template-columns: 1fr; gap: 15px; max-width: 400px; margin: auto; }
+        .menu-item { background: #fff; border: 2px solid #556b2f; border-radius: 15px; padding: 20px; text-decoration: none; color: #000; font-weight: bold; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 0 #ccd4bb; transition: 0.2s; }
+        .menu-item:active { transform: translateY(4px); box-shadow: none; }
+        .icon { font-size: 24px; margin-right: 10px; }
+        .footer-deco { margin-top: 40px; font-size: 20px; color: #bc8f8f; opacity: 0.6; }
+    </style>
+</head>
+<body>
+    <h1>🐾 うちの子</h1>
+    <p class="subtitle">だいじな家族の、毎日のきろく</p>
+    <div class="pet-selector">
+        <div id="dogOpt" class="pet-option" onclick="selectPet('dog')">いぬ 🐶</div>
+        <div id="catOpt" class="pet-option" onclick="selectPet('cat')">ねこ 🐱</div>
+    </div>
+    <div class="menu-container">
+        <a href="diary.html" class="menu-item"><span class="icon">📖</span> 日記をつける</a>
+        <a href="symptoms.html" class="menu-item"><span class="icon">🔍</span> 症状をふりかえる</a>
+        <a href="album.html" class="menu-item"><span class="icon">📸</span> 写真動画アルバム</a>
+        <a href="blood.html" class="menu-item"><span class="icon">🏥</span> 血液検査の結果をみる</a>
+    </div>
+    <div class="footer-deco">🐾 🐾 🐾</div>
+    <script>
+        const PET_KEY = 'selected_pet_type';
+        function selectPet(type) { localStorage.setItem(PET_KEY, type); updatePetUI(); }
+        function updatePetUI() {
+            const pet = localStorage.getItem(PET_KEY) || 'dog';
+            document.getElementById('dogOpt').classList.toggle('active', pet === 'dog');
+            document.getElementById('catOpt').classList.toggle('active', pet === 'cat');
+        }
+        window.onload = updatePetUI;
+    </script>
+</body>
+</html>

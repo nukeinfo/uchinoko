@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日記 - うちの子記録</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; width: 100%; overflow-x: hidden; }
+        body { background-color: #f5f5dc; font-family: sans-serif; padding: 15px; color: #000; }
+        h1 { font-size: 1.1rem; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px; }
+        .input-section { background: #fff; border: 2px solid #000; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        label { font-weight: bold; display: block; margin-top: 10px; font-size: 0.9rem; }
+        input, textarea { width: 100%; padding: 12px; font-size: 16px; border: 2px solid #000; border-radius: 5px; box-sizing: border-box; margin-top: 5px; display: block; -webkit-appearance: none; appearance: none; }
+        input[type="datetime-local"] { width: 100%; max-width: 100%; overflow: hidden; }
+        .save-btn { -webkit-appearance: none; background-color: #adff2f; border: 2px solid #000; border-radius: 10px; font-weight: bold; width: 100%; padding: 15px; margin-top: 15px; font-size: 1.1rem; cursor: pointer; box-shadow: 2px 2px 0px #000; display: block; box-sizing: border-box; }
+        
+        /* 履歴表示：黒文字統一 */
+        .log-item { background: #fff; border: 2px solid #000; border-left: 8px solid #adff2f; padding: 12px; margin-bottom: 12px; }
+        .log-date-line { font-weight: bold; color: #000; font-size: 15px; display: block; margin-bottom: 5px; }
+        .log-content-line { white-space: pre-wrap; font-size: 15px; display: block; color: #000; line-height: 1.5; }
+        
+        .action-btns { text-align: right; margin-top: 10px; }
+        .edit-btn, .del-btn { border: 1px solid #000; border-radius: 5px; padding: 8px 12px; font-size: 13px; cursor: pointer; margin-left: 10px; font-weight: bold; background: #fff; }
+    </style>
+</head>
+<body>
+    <a href="index.html" style="font-weight:bold; text-decoration:none; color:#000;">← 戻る</a>
+    <h1>日々の記録（日記）</h1>
+
+    <div class="input-section">
+        <label>日時</label>
+        <input type="datetime-local" id="logTime">
+        <label>できごと</label>
+        <textarea id="logText" placeholder="例：ごはんを完食した。"></textarea>
+        <button id="mainBtn" class="save-btn">記録を保存する</button>
+    </div>
+
+    <div id="diaryList">読み込み中...</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, updateDoc, deleteDoc, doc, Timestamp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOevKlIPTEu1pgZhyf_a-I2US5KbZQi2c",
+            authDomain: "uchinoko-58fc7.firebaseapp.com",
+            projectId: "uchinoko-58fc7",
+            storageBucket: "uchinoko-58fc7.firebasestorage.app",
+            messagingSenderId: "47451202211",
+            appId: "1:47451202211:web:f205f797c3560f5c7c9516"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const mainBtn = document.getElementById('mainBtn');
+        const textInput = document.getElementById('logText');
+        const timeInput = document.getElementById('logTime');
+        let editId = null;
+
+        function resetUI() {
+            textInput.value = "";
+            mainBtn.innerText = "記録を保存する";
+            editId = null;
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            timeInput.value = now.toISOString().slice(0, 16);
+        }
+
+        // 保存・修正実行
+        mainBtn.addEventListener('click', async () => {
+            if (!textInput.value) return alert("内容を入力してください");
+            try {
+                const data = { time: timeInput.value, text: textInput.value };
+                if (editId) {
+                    await updateDoc(doc(db, "pet_diary", editId), data);
+                } else {
+                    await addDoc(collection(db, "pet_diary"), { ...data, timestamp: Timestamp.now() });
+                }
+                resetUI();
+            } catch (e) { alert("エラーが発生しました。"); }
+        });
+
+        // 読み込み表示
+        onSnapshot(query(collection(db, "pet_diary"), orderBy("time", "desc")), (snapshot) => {
+            const listDiv = document.getElementById('diaryList');
+            listDiv.innerHTML = "";
+            
+            snapshot.forEach((d) => {
+                const data = d.data();
+                const id = d.id;
+                const item = document.createElement('div');
+                item.className = "log-item";
+                
+                const timeStr = (data.time || "").replace('T', ' ');
+                
+                item.innerHTML = `
+                    <span class="log-date-line">${timeStr}</span>
+                    <span class="log-content-line">${data.text || ""}</span>
+                    <div class="action-btns">
+                        <button class="edit-btn">修正</button>
+                        <button class="del-btn">削除</button>
+                    </div>`;
+                
+                // 修正ボタン
+                item.querySelector('.edit-btn').onclick = () => {
+                    timeInput.value = data.time || "";
+                    textInput.value = data.text || "";
+                    editId = id;
+                    mainBtn.innerText = "修正を反映する";
+                    window.scrollTo(0, 0);
+                };
+
+                // 削除ボタン
+                item.querySelector('.del-btn').onclick = async () => {
+                    if (confirm("削除しますか？")) await deleteDoc(doc(db, "pet_diary", id));
+                };
+
+                listDiv.appendChild(item);
+            });
+        });
+
+        resetUI();
+    </script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>詳細血液検査 - うちの子記録</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        body { background-color: #f5f5dc; font-family: sans-serif; padding: 20px; color: #000; margin: 0; padding-bottom: 220px; }
+        .container { max-width: 500px; margin: 0 auto; }
+        h1 { font-size: 18px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        .back-btn { display: inline-block; margin: 10px 0; text-decoration: none; color: #000; font-weight: bold; }
+        .ocr-box { background: #e0f7fa; border: 2px dashed #00796b; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; overflow: hidden; }
+        #status { font-size: 12px; color: #00796b; margin-top: 8px; font-weight: bold; }
+        .test-group { background: #fff; border: 2px solid #000; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        .group-title { font-weight: bold; border-left: 5px solid #adff2f; padding-left: 10px; margin-bottom: 12px; background: #fafafa; font-size: 14px; border-bottom: 1px solid #ddd; }
+        .test-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .test-label { font-weight: bold; font-size: 14px; cursor: pointer; text-decoration: underline; color: #000; display: inline-block; padding: 2px 0; flex: 1; margin-right: 8px; }
+        .test-input { width: 90px; min-width: 0; flex-shrink: 0; padding: 6px; border: 2px solid #000; border-radius: 5px; text-align: center; font-size: 15px; box-sizing: border-box; }
+        #dictBox { position: fixed; bottom: 0; left: 0; right: 0; background: #fffbe6; border-top: 3px solid #000; padding: 15px; display: none; z-index: 1000; box-shadow: 0 -5px 15px rgba(0,0,0,0.3); max-height: 45vh; overflow-y: auto; }
+        .close-dict { float: right; cursor: pointer; font-weight: bold; font-size: 28px; padding: 0 10px; line-height: 1; }
+        .save-btn { background-color: #adff2f; border: 2px solid #000; border-radius: 10px; color: #000; font-weight: bold; width: 100%; padding: 15px; font-size: 18px; cursor: pointer; box-shadow: 3px 3px 0px #000; margin-top: 10px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a href="index.html" class="back-btn">← 戻る</a>
+    <h1 id="page-title">血液検査記録</h1>
+
+    <div class="ocr-box">
+        <label style="font-weight:bold;">検査用紙を撮影して一括入力</label><br>
+        <input type="file" id="ocr-file" accept="image/*" capture="environment" style="margin-top:10px;">
+        <div id="status">画像を読み込むと解析を開始します</div>
+    </div>
+
+    <div class="test-group">
+        <label>検査日:</label>
+        <input type="date" id="testDate" style="width:100%; padding:10px; margin:10px 0 20px; border:2px solid #000; border-radius:5px; box-sizing:border-box;">
+        
+        <div class="group-title">赤血球系（貧血の評価）</div>
+        <div class="test-row"><span class="test-label" onclick="showDict('RBC')">RBC (赤血球数)</span><input type="number" id="valRBC" class="test-input" step="0.01"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('HCT')">HCT (ヘマトクリット)</span><input type="number" id="valHCT" class="test-input" step="0.1"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('HGB')">HGB (ヘモグロビン)</span><input type="number" id="valHGB" class="test-input" step="0.1"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('RET')">RET (網状赤血球数)</span><input type="number" id="valRET" class="test-input"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('NRBC')">有核赤血球 (nRBC)</span><input type="number" id="valNRBC" class="test-input" step="0.1"></div>
+
+        <div class="group-title">白血球系内訳</div>
+        <div class="test-row"><span class="test-label" onclick="showDict('WBC')">WBC (白血球計)</span><input type="number" id="valWBC" class="test-input"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('NEU')">Neu (好中球)</span><input type="number" id="valNEU" class="test-input"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('LYM')">Lym (リンパ球)</span><input type="number" id="valLYM" class="test-input"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('MON')">Mon (単球)</span><input type="number" id="valMON" class="test-input"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('EOS')">Eos (好酸球)</span><input type="number" id="valEOS" class="test-input"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('BAS')">Bas (好塩基球)</span><input type="number" id="valBAS" class="test-input"></div>
+
+        <div class="group-title">血小板（止血）</div>
+        <div class="test-row"><span class="test-label" onclick="showDict('PLT')">PLT (血小板数)</span><input type="number" id="valPLT" class="test-input"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('MPV')">MPV (平均血小板容積)</span><input type="number" id="valMPV" class="test-input" step="0.1"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('PCT')">PCT (血小板クリット)</span><input type="number" id="valPCT" class="test-input" step="0.01"></div>
+
+        <button class="save-btn" onclick="saveTest()">記録を保存する</button>
+    </div>
+</div>
+
+<div id="dictBox">
+    <span class="close-dict" onclick="closeDict()">×</span>
+    <div id="dictTitle" style="font-weight:bold; font-size:18px; margin-bottom:10px; color:#000;"></div>
+    <div id="dictContent" style="font-size:15px; line-height:1.6; color:#333;"></div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAOevKlIPTEu1pgZhyf_a-I2US5KbZQi2c",
+        authDomain: "uchinoko-58fc7.firebaseapp.com",
+        projectId: "uchinoko-58fc7",
+        storageBucket: "uchinoko-58fc7.firebasestorage.app",
+        messagingSenderId: "47451202211",
+        appId: "1:47451202211:web:f205f797c3560f5c7c9516"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // 犬猫判定（元のロジック維持）
+    const petType = localStorage.getItem('selected_pet_type') || 'cat';
+    const icon = petType === 'dog' ? '🐶' : '🐱';
+    document.getElementById('page-title').innerText = icon + " 血液詳細記録 (IDEXX)";
+
+    // 辞書データ（元のまま）
+    const dicts = {
+        dog: { 'RBC': '【犬：赤血球】酸素を運ぶ役割。貧血や脱水で増減します。','HCT': '【犬：ヘマトクリット】血液中に占める赤血球の容積比。貧血の指標。','HGB': '【犬：ヘモグロビン】赤血球の中の酸素を運ぶタンパク質。','RET': '【犬：網状赤血球】新しく作られた若い赤血球。貧血時の反応を見ます。','NRBC': '【有核赤血球】通常は出ませんが、重度の貧血や脾臓疾患で出現することがあります。','WBC': '【白血球】免疫。感染や炎症、ストレスなどで数値が変動します。','NEU': '【好中球】急性炎症や細菌感染に素早く反応する白血球。','LYM': '【リンパ球】免疫に関連。慢性炎症やウイルスの影響を受けます。','MON': '【単球】慢性的な炎症や組織損傷がある場合に増加します。','EOS': '【好酸球】寄生虫やアレルギーに関連して増加します。','BAS': '【好塩基球】非常に珍しい項目。重度のアレルギー等に関連。','PLT': '【血小板】止血に関与。数値が低いと出血が止まりにくくなります。','MPV': '【平均血小板容積】血小板の大きさ。若い血小板が多いと大きくなります。','PCT': '【血小板クリット】全血液中の血小板の占める割合。' },
+        cat: { 'RBC': '【猫：赤血球】腎不全で造血ホルモンが減ると、数値が下がって貧血になります。','HCT': '【猫：ヘマトクリット】猫の貧血を評価する上で最も基本的な指標です。','HGB': '【猫：ヘモグロビン】赤血球内の酸素運搬色素。貧血の程度を評価します。','RET': '【猫：網状赤血球】骨髄で血が作られているかの指標。猫は立ち上がりが遅めです。','NRBC': '【有核赤血球】出現は、貧血のほか心筋症などの重大なサインのこともあります。','WBC': '【白血球】猫は恐怖や興奮（病院など）でも一時的に急増しやすいのが特徴。','NEU': '【好中球】急性炎症、感染症、強いストレスなどで増加します。','LYM': '【リンパ球】ウイルス疾患や慢性炎症、腫瘍などで変動することがあります。','MON': '【単球】慢性炎症や重篤な疾患などで見られることがあります。','EOS': '【好酸球】アレルギー、寄生虫のほか、猫特有の肉芽腫疾患でも上昇。','BAS': '【好塩基球】心糸状虫症やノミアレルギーなどに関連することがあります。','PLT': '【血小板】猫は採血時のストレスで固まりやすく、数値が低く出やすい傾向です。','MPV': '【平均血小板容積】猫では若い血小板が大きくなるため、再生性の指標になります。','PCT': '【血小板クリット】血小板の総重量的な指標。猫では評価に有用です。' }
+    };
+
+    window.showDict = function(item) {
+        const box = document.getElementById('dictBox');
+        document.getElementById('dictTitle').innerText = item + " についての事実";
+        document.getElementById('dictContent').innerText = dicts[petType][item] || "詳細な解説を準備中です。";
+        box.style.display = 'block';
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    };
+
+    window.closeDict = function() { document.getElementById('dictBox').style.display = 'none'; };
+
+    // OCR（元の機能を維持）
+    const fileInput = document.getElementById('ocr-file');
+    if(fileInput) {
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('status').innerText = "解析中...（約15秒）";
+            const worker = await Tesseract.createWorker('eng');
+            const { data: { text } } = await worker.recognize(file);
+            const labels = ['RBC','HCT','HGB','RET','NRBC','WBC','NEU','LYM','MON','EOS','BAS','PLT','MPV','PCT'];
+            labels.forEach(id => {
+                const reg = new RegExp(id + "[^0-9]*([0-9.]+)");
+                const match = text.match(reg);
+                if (match) { document.getElementById('val' + id).value = match[1]; }
+            });
+            document.getElementById('status').innerText = "解析完了。";
+            await worker.terminate();
+        });
+    }
+
+    // 保存機能（家族で共有できるように変更）
+    window.saveTest = async function() {
+        const testDate = document.getElementById('testDate').value;
+        if (!testDate) return alert("検査日を選択してください");
+
+        const data = { testDate, petType, timestamp: new Date() };
+        ['RBC','HCT','HGB','RET','NRBC','WBC','NEU','LYM','MON','EOS','BAS','PLT','MPV','PCT'].forEach(id => {
+            data[id] = document.getElementById('val' + id).value;
+        });
+
+        try {
+            await addDoc(collection(db, "blood_tests"), data);
+            alert("家族全員の記録として保存しました");
+        } catch (e) {
+            alert("保存に失敗しました");
+        }
+    };
+</script>
+</body>
+</html>
