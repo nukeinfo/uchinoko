@@ -7,7 +7,7 @@
   "theme_color": "#adff2f",
   "icons": [
     {
-      "src": "https://via.placeholder.com/192x192.png?text=Record",
+      "src": "icon.png",
       "sizes": "192x192",
       "type": "image/png"
     }
