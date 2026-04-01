@@ -7,7 +7,7 @@
   "theme_color": "#adff2f",
   "icons": [
     {
-      "src": "icon.png",
+      "src": "https://nukeinfo.github.io/uchinoko/uchinoko-app/icon.png",
       "sizes": "192x192",
       "type": "image/png"
     }
