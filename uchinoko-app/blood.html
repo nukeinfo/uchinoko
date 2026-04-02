@@ -7,20 +7,21 @@
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         *, *::before, *::after { box-sizing: border-box; }
-        body { background-color: #f5f5dc; font-family: sans-serif; padding: 20px; color: #000; margin: 0; padding-bottom: 220px; }
-        .container { max-width: 500px; margin: 0 auto; }
+        html, body { margin: 0; padding: 0; width: 100%; overflow-x: hidden; }
+        body { background-color: #f5f5dc; font-family: sans-serif; padding: 20px; color: #000; padding-bottom: 220px; }
+        .container { max-width: 500px; margin: 0 auto; width: 100%; }
         h1 { font-size: 18px; border-bottom: 2px solid #000; padding-bottom: 10px; }
         .back-btn { display: inline-block; margin: 10px 0; text-decoration: none; color: #000; font-weight: bold; }
-        .ocr-box { background: #e0f7fa; border: 2px dashed #00796b; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; overflow: hidden; }
+        .ocr-box { background: #e0f7fa; border: 2px dashed #00796b; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; width: 100%; }
         #status { font-size: 12px; color: #00796b; margin-top: 8px; font-weight: bold; }
-        .test-group { background: #fff; border: 2px solid #000; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        .test-group { background: #fff; border: 2px solid #000; padding: 15px; border-radius: 10px; margin-bottom: 20px; width: 100%; }
         .group-title { font-weight: bold; border-left: 5px solid #adff2f; padding-left: 10px; margin-bottom: 12px; background: #fafafa; font-size: 14px; border-bottom: 1px solid #ddd; }
         .test-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        .test-label { font-weight: bold; font-size: 14px; cursor: pointer; text-decoration: underline; color: #000; display: inline-block; padding: 2px 0; flex: 1; margin-right: 8px; }
+        .test-label { font-weight: bold; font-size: 14px; cursor: pointer; text-decoration: underline; color: #000; display: inline-block; padding: 2px 0; flex: 1; margin-right: 8px; word-break: break-all; }
         .test-input { width: 90px; min-width: 0; flex-shrink: 0; padding: 6px; border: 2px solid #000; border-radius: 5px; text-align: center; font-size: 15px; box-sizing: border-box; }
         #dictBox { position: fixed; bottom: 0; left: 0; right: 0; background: #fffbe6; border-top: 3px solid #000; padding: 15px; display: none; z-index: 1000; box-shadow: 0 -5px 15px rgba(0,0,0,0.3); max-height: 45vh; overflow-y: auto; }
         .close-dict { float: right; cursor: pointer; font-weight: bold; font-size: 28px; padding: 0 10px; line-height: 1; }
-        .save-btn { background-color: #adff2f; border: 2px solid #000; border-radius: 10px; color: #000; font-weight: bold; width: 100%; padding: 15px; font-size: 18px; cursor: pointer; box-shadow: 3px 3px 0px #000; margin-top: 10px; }
+        .save-btn { -webkit-appearance: none; background-color: #adff2f; border: 2px solid #000; border-radius: 10px; color: #000; font-weight: bold; width: 100%; padding: 15px; font-size: 18px; cursor: pointer; box-shadow: 3px 3px 0px #000; margin-top: 10px; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -29,14 +30,25 @@
     <h1 id="page-title">血液検査記録</h1>
 
     <div class="ocr-box">
-        <label style="font-weight:bold;">検査用紙を撮影して一括入力</label><br>
-        <input type="file" id="ocr-file" accept="image/*" capture="environment" style="margin-top:10px;">
-        <div id="status">画像を読み込むと解析を開始します</div>
+        <label style="font-weight:bold;">📋 検査用紙を読み取って一括入力</label>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+            <label style="flex:1; background:#adff2f; border:2px solid #000; border-radius:8px; padding:10px; text-align:center; font-weight:bold; cursor:pointer; font-size:14px;">
+                📷 カメラで撮影
+                <input type="file" id="ocr-camera" accept="image/*" capture="environment" style="display:none;">
+            </label>
+            <label style="flex:1; background:#fff; border:2px solid #000; border-radius:8px; padding:10px; text-align:center; font-weight:bold; cursor:pointer; font-size:14px;">
+                🖼 写真から選ぶ
+                <input type="file" id="ocr-gallery" accept="image/*" multiple style="display:none;">
+            </label>
+        </div>
+        <div id="previewArea" style="margin-top:10px; display:flex; flex-wrap:wrap; gap:5px;"></div>
+        <button id="ocrBtn" onclick="runOCR()" style="display:none; margin-top:10px; background:#00796b; color:#fff; border:2px solid #000; border-radius:8px; padding:10px; width:100%; font-size:15px; font-weight:bold; cursor:pointer;">🔍 読み取り開始</button>
+        <div id="status" style="margin-top:8px;">画像を選ぶと読み取りを開始できます</div>
+        <canvas id="processCanvas" style="display:none;"></canvas>
     </div>
-
     <div class="test-group">
         <label>検査日:</label>
-        <input type="date" id="testDate" style="width:100%; max-width:100%; padding:10px; margin:10px 0 20px; border:2px solid #000; border-radius:5px; box-sizing:border-box; -webkit-appearance:none; appearance:none; display:block;">
+        <input type="date" id="testDate" style="width:100%; padding:10px; margin:10px 0 20px; border:2px solid #000; border-radius:5px; box-sizing:border-box; -webkit-appearance:none; appearance:none;">
         
         <div class="group-title">赤血球系（貧血の評価）</div>
         <div class="test-row"><span class="test-label" onclick="showDict('RBC')">RBC (赤血球数)</span><input type="number" id="valRBC" class="test-input" step="0.01"></div>
@@ -105,25 +117,88 @@
 
     window.closeDict = function() { document.getElementById('dictBox').style.display = 'none'; };
 
-    // OCR（元の機能を維持）
-    const fileInput = document.getElementById('ocr-file');
-    if(fileInput) {
-        fileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            document.getElementById('status').innerText = "解析中...（約15秒）";
-            const worker = await Tesseract.createWorker('eng');
-            const { data: { text } } = await worker.recognize(file);
-            const labels = ['RBC','HCT','HGB','RET','NRBC','WBC','NEU','LYM','MON','EOS','BAS','PLT','MPV','PCT'];
-            labels.forEach(id => {
-                const reg = new RegExp(id + "[^0-9]*([0-9.]+)");
-                const match = text.match(reg);
-                if (match) { document.getElementById('val' + id).value = match[1]; }
-            });
-            document.getElementById('status').innerText = "解析完了。";
-            await worker.terminate();
+    // OCR改善版（カメラロール対応・複数枚・画像前処理）
+    let selectedFiles = [];
+
+    function addFiles(files) {
+        for (const file of files) {
+            selectedFiles.push(file);
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            img.style.cssText = 'width:70px; height:70px; object-fit:cover; border:2px solid #000; border-radius:5px;';
+            document.getElementById('previewArea').appendChild(img);
+        }
+        document.getElementById('ocrBtn').style.display = selectedFiles.length > 0 ? 'block' : 'none';
+    }
+
+    document.getElementById('ocr-camera').addEventListener('change', e => addFiles(e.target.files));
+    document.getElementById('ocr-gallery').addEventListener('change', e => addFiles(e.target.files));
+
+    // 画像を白黒・コントラスト強調して精度を上げる
+    function preprocessImage(file) {
+        return new Promise(resolve => {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.getElementById('processCanvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imageData.data;
+                for (let i = 0; i < data.length; i += 4) {
+                    // グレースケール変換
+                    const gray = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+                    // コントラスト強調（二値化に近い処理）
+                    const val = gray > 140 ? 255 : 0;
+                    data[i] = data[i+1] = data[i+2] = val;
+                }
+                ctx.putImageData(imageData, 0, 0);
+                canvas.toBlob(resolve, 'image/png');
+            };
+            img.src = URL.createObjectURL(file);
         });
     }
+
+    window.runOCR = async function() {
+        if (selectedFiles.length === 0) return alert("画像を選んでください");
+        const statusEl = document.getElementById('status');
+        statusEl.innerText = `解析中... 0/${selectedFiles.length}枚`;
+        document.getElementById('ocrBtn').disabled = true;
+
+        const labels = ['RBC','HCT','HGB','RET','NRBC','WBC','NEU','LYM','MON','EOS','BAS','PLT','MPV','PCT'];
+        const worker = await Tesseract.createWorker('eng');
+        await worker.setParameters({ tessedit_char_whitelist: '0123456789.ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz :-' });
+
+        let allText = '';
+        for (let i = 0; i < selectedFiles.length; i++) {
+            statusEl.innerText = `解析中... ${i+1}/${selectedFiles.length}枚`;
+            const processed = await preprocessImage(selectedFiles[i]);
+            const { data: { text } } = await worker.recognize(processed);
+            allText += ' ' + text;
+        }
+
+        await worker.terminate();
+
+        let found = 0;
+        labels.forEach(id => {
+            const patterns = [
+                new RegExp(id + '\\s*[:\\-]?\\s*([0-9]+\\.?[0-9]*)'),
+                new RegExp(id + '[^0-9]{0,5}([0-9]+\\.?[0-9]*)'),
+            ];
+            for (const reg of patterns) {
+                const match = allText.match(reg);
+                if (match) {
+                    document.getElementById('val' + id).value = match[1];
+                    found++;
+                    break;
+                }
+            }
+        });
+
+        statusEl.innerText = `解析完了！ ${found}/${labels.length}項目を自動入力しました。残りは手動で入力してください。`;
+        document.getElementById('ocrBtn').disabled = false;
+    };
 
     // 保存機能（家族で共有できるように変更）
     window.saveTest = async function() {
