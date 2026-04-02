@@ -5,65 +5,171 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>写真・動画 - うちの子記録</title>
     <style>
-        /* あなたの元のデザインを完全に維持 */
-        body { background-color: #f5f5dc; font-family: sans-serif; padding: 20px; color: #000; text-align: center; }
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; width: 100%; overflow-x: hidden; }
+        body { background-color: #f5f5dc; font-family: sans-serif; padding: 20px; color: #000; }
         h1 { font-size: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; text-align: left; }
         .back-btn { display: block; text-align: left; margin-bottom: 15px; text-decoration: none; color: #000; font-weight: bold; }
 
-        /* アップロードエリア */
         .upload-section { background: #fff; border: 2px solid #000; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
-        input[type="file"] { margin-top: 10px; font-size: 16px; }
-        .save-btn { background-color: #adff2f; border: 2px solid #000; border-radius: 10px; font-weight: bold; width: 100%; padding: 15px; margin-top: 15px; font-size: 18px; cursor: pointer; }
+        .upload-section label { font-weight: bold; display: block; margin-bottom: 10px; }
+        input[type="file"] { font-size: 16px; width: 100%; }
+        .save-btn { background-color: #adff2f; border: 2px solid #000; border-radius: 10px; font-weight: bold; width: 100%; padding: 15px; margin-top: 15px; font-size: 18px; cursor: pointer; box-shadow: 2px 2px 0px #000; -webkit-appearance: none; }
 
-        /* アルバム表示（グリッド） */
-        .album-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 20px; }
-        .album-item { background: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px; position: relative; }
-        .album-item img, .album-item video { width: 100%; border-radius: 3px; display: block; height: auto; aspect-ratio: 1/1; object-fit: cover; }
-        
-        /* 削除ボタン */
-        .del-badge { 
-            position: absolute; top: 5px; right: 5px; 
-            background: rgba(255, 77, 77, 0.9); color: white; 
-            border: none; border-radius: 50%; width: 25px; height: 25px; 
-            cursor: pointer; font-weight: bold; font-size: 14px; z-index: 10;
-        }
+        /* 動画トリミングエリア */
+        .trim-section { background: #fff; border: 2px solid #000; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: none; }
+        .trim-section h2 { font-size: 16px; margin: 0 0 10px; }
+        #previewVideo { width: 100%; border-radius: 8px; background: #000; display: block; }
+        .slider-label { font-size: 14px; margin: 12px 0 5px; font-weight: bold; }
+        #startSlider { width: 100%; margin-bottom: 5px; }
+        .time-display { font-size: 13px; color: #555; margin-bottom: 10px; }
+        .trim-btns { display: flex; gap: 10px; margin-top: 10px; }
+        .preview-btn { background: #fff; border: 2px solid #000; border-radius: 8px; padding: 12px; font-size: 15px; font-weight: bold; cursor: pointer; flex: 1; }
+        .fullscreen-btn { background: #adff2f; border: 2px solid #000; border-radius: 8px; padding: 12px; font-size: 15px; font-weight: bold; cursor: pointer; flex: 1; }
+
+        /* 全画面モーダル */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; flex-direction: column; align-items: center; justify-content: center; }
+        .modal.show { display: flex; }
+        #modalVideo { width: 100%; max-height: 80vh; }
+        .modal-close { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 36px; cursor: pointer; font-weight: bold; background: none; border: none; }
+        .modal-label { color: #fff; font-size: 14px; margin-top: 10px; }
     </style>
 </head>
 <body>
     <a href="index.html" class="back-btn">← 戻る</a>
-    <h1>写真・動画のアルバム</h1>
+    <h1>📹 動画・写真</h1>
 
     <div class="upload-section">
-        <label>📸 新しい写真・動画を選択</label><br>
+        <label>📂 動画または写真を選択</label>
         <input type="file" id="mediaFile" accept="image/*,video/*">
-        <button class="save-btn" onclick="saveMedia()">アルバムに追加する</button>
+        <button class="save-btn" onclick="loadMedia()">読み込む</button>
     </div>
 
-    <div id="mediaList" class="album-grid">読み込み中...</div>
+    <div class="trim-section" id="trimSection">
+        <h2 id="trimTitle">動画のトリミング</h2>
+        <video id="previewVideo" controls playsinline></video>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+        <div id="sliderArea">
+            <div class="slider-label">▶ 開始位置を選んでください</div>
+            <input type="range" id="startSlider" min="0" value="0" step="0.1">
+            <div class="time-display" id="timeDisplay">開始：0秒 → 終了：10秒</div>
+            <div class="trim-btns">
+                <button class="preview-btn" onclick="previewTrim()">▶ この範囲を再生</button>
+                <button class="fullscreen-btn" onclick="showFullscreen()">🔍 獣医に見せる</button>
+            </div>
+        </div>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyAOevKlIPTEu1pgZhyf_a-I2US5KbZQi2c",
-            authDomain: "uchinoko-58fc7.firebaseapp.com",
-            projectId: "uchinoko-58fc7",
-            storageBucket: "uchinoko-58fc7.firebasestorage.app",
-            messagingSenderId: "47451202211",
-            appId: "1:47451202211:web:f205f797c3560f5c7c9516"
-        };
+        <div id="photoArea" style="display:none;">
+            <div class="trim-btns" style="margin-top:10px;">
+                <button class="fullscreen-btn" onclick="showFullscreen()">🔍 獣医に見せる</button>
+            </div>
+        </div>
+    </div>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    <!-- 全画面モーダル -->
+    <div class="modal" id="fullscreenModal">
+        <button class="modal-close" onclick="closeFullscreen()">×</button>
+        <video id="modalVideo" controls playsinline autoplay></video>
+        <img id="modalImage" style="display:none; width:100%; max-height:80vh; object-fit:contain;">
+        <div class="modal-label" id="modalLabel"></div>
+    </div>
 
-        // 保存機能（家族全員で共有できるように変更）
-        window.saveMedia = function() {
-            const fileInput = document.getElementById('mediaFile');
-            const file = fileInput.files[0];
+    <script>
+        let currentFile = null;
+        let isVideo = false;
+        let duration = 0;
+        const TRIM_SEC = 10;
+
+        function loadMedia() {
+            const file = document.getElementById('mediaFile').files[0];
             if (!file) return alert("ファイルを選択してください");
+            currentFile = file;
+            isVideo = file.type.startsWith('video');
 
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                const mediaData = {
-                    type: file.type.startsWith('video') ? 'video' : '
+            const trimSection = document.getElementById('trimSection');
+            trimSection.style.display = 'block';
+
+            if (isVideo) {
+                document.getElementById('trimTitle').textContent = '動画のトリミング（10秒）';
+                document.getElementById('sliderArea').style.display = 'block';
+                document.getElementById('photoArea').style.display = 'none';
+
+                const video = document.getElementById('previewVideo');
+                video.style.display = 'block';
+                video.src = URL.createObjectURL(file);
+                video.onloadedmetadata = function() {
+                    duration = video.duration;
+                    const slider = document.getElementById('startSlider');
+                    const maxStart = Math.max(0, duration - TRIM_SEC);
+                    slider.max = maxStart.toFixed(1);
+                    slider.value = 0;
+                    updateTimeDisplay(0);
+                };
+            } else {
+                // 写真の場合
+                document.getElementById('trimTitle').textContent = '写真のプレビュー';
+                document.getElementById('sliderArea').style.display = 'none';
+                document.getElementById('photoArea').style.display = 'block';
+
+                const video = document.getElementById('previewVideo');
+                video.style.display = 'none';
+            }
+        }
+
+        document.getElementById('startSlider').addEventListener('input', function() {
+            const startTime = parseFloat(this.value);
+            updateTimeDisplay(startTime);
+            const video = document.getElementById('previewVideo');
+            video.currentTime = startTime;
+        });
+
+        function updateTimeDisplay(startTime) {
+            const endTime = Math.min(startTime + TRIM_SEC, duration);
+            document.getElementById('timeDisplay').textContent =
+                `開始：${startTime.toFixed(1)}秒 → 終了：${endTime.toFixed(1)}秒（${(endTime - startTime).toFixed(1)}秒間）`;
+        }
+
+        function previewTrim() {
+            const video = document.getElementById('previewVideo');
+            const startTime = parseFloat(document.getElementById('startSlider').value);
+            video.currentTime = startTime;
+            video.play();
+
+            setTimeout(() => { video.pause(); }, TRIM_SEC * 1000);
+        }
+
+        function showFullscreen() {
+            const modal = document.getElementById('fullscreenModal');
+            const modalVideo = document.getElementById('modalVideo');
+            const modalImage = document.getElementById('modalImage');
+            const modalLabel = document.getElementById('modalLabel');
+
+            modal.classList.add('show');
+
+            if (isVideo) {
+                const startTime = parseFloat(document.getElementById('startSlider').value);
+                modalVideo.style.display = 'block';
+                modalImage.style.display = 'none';
+                modalVideo.src = URL.createObjectURL(currentFile);
+                modalVideo.onloadedmetadata = function() {
+                    modalVideo.currentTime = startTime;
+                    modalVideo.play();
+                    setTimeout(() => { modalVideo.pause(); }, TRIM_SEC * 1000);
+                };
+                modalLabel.textContent = `${parseFloat(document.getElementById('startSlider').value).toFixed(1)}秒〜${(parseFloat(document.getElementById('startSlider').value) + TRIM_SEC).toFixed(1)}秒`;
+            } else {
+                modalVideo.style.display = 'none';
+                modalImage.style.display = 'block';
+                modalImage.src = URL.createObjectURL(currentFile);
+                modalLabel.textContent = '写真';
+            }
+        }
+
+        function closeFullscreen() {
+            const modal = document.getElementById('fullscreenModal');
+            modal.classList.remove('show');
+            document.getElementById('modalVideo').pause();
+        }
+    </script>
+</body>
+</html>
