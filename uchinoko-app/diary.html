@@ -63,8 +63,13 @@
             mainBtn.innerText = "記録を保存する";
             editId = null;
             const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            timeInput.value = now.toISOString().slice(0, 16);
+            const jst = new Date(now.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }));
+            const y = jst.getFullYear();
+            const m = String(jst.getMonth() + 1).padStart(2, '0');
+            const d = String(jst.getDate()).padStart(2, '0');
+            const h = String(jst.getHours()).padStart(2, '0');
+            const min = String(jst.getMinutes()).padStart(2, '0');
+            timeInput.value = `${y}-${m}-${d}T${h}:${min}`;
         }
 
         // 保存・修正実行
