@@ -5,28 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>症状 - うちの子記録</title>
     <style>
-        /* あなたの元のデザインを完全に維持 */
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; width: 100%; overflow-x: hidden; }
         body { background-color: #f5f5dc; font-family: sans-serif; padding: 20px; color: #000; }
         h1 { font-size: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
         .back-btn { display: inline-block; margin-bottom: 15px; text-decoration: none; color: #000; font-weight: bold; }
 
-        /* ワード設定エリア */
         .setting-section { background: #fff; border: 2px solid #000; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
-        .word-input { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #000; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
-        .save-words-btn { background-color: #ccc; border: 1px solid #000; padding: 5px 10px; margin-top: 10px; cursor: pointer; border-radius: 5px; font-size: 14px; }
+        .setting-section small { color: #555; }
+        .word-input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #000; border-radius: 5px; box-sizing: border-box; font-size: 16px; }
+        .save-words-btn { background-color: #ccc; border: 1px solid #000; padding: 10px 15px; margin-top: 10px; cursor: pointer; border-radius: 5px; font-size: 15px; width: 100%; font-weight: bold; }
 
-        /* 抽出ボタン（黄緑） */
         .filter-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
-        .filter-btn { 
-            background-color: #adff2f; border: 2px solid #000; border-radius: 10px; 
+        .filter-btn {
+            background-color: #adff2f; border: 2px solid #000; border-radius: 10px;
             padding: 12px 15px; font-weight: bold; cursor: pointer; flex-grow: 1; text-align: center;
+            font-size: 15px;
         }
+        .filter-btn.active { background-color: #556b2f; color: #fff; }
 
-        /* 抽出結果リスト */
-        .result-item { background: #fff; border: 1px solid #000; padding: 10px; margin-bottom: 5px; border-radius: 5px; text-align: left; }
-        .result-time { font-weight: bold; font-size: 14px; color: #555; }
-        .result-text { font-size: 16px; margin-top: 5px; white-space: pre-wrap; }
-        .empty-msg { color: #666; font-style: italic; }
+        hr { border: none; border-top: 2px solid #000; margin: 10px 0 15px; }
+        h2 { font-size: 16px; margin-bottom: 10px; }
+
+        .result-item { background: #fff; border: 2px solid #000; border-left: 6px solid #adff2f; padding: 10px 12px; margin-bottom: 8px; border-radius: 5px; }
+        .result-time { font-weight: bold; font-size: 13px; color: #555; display: block; margin-bottom: 4px; }
+        .result-text { font-size: 15px; white-space: pre-wrap; display: block; }
+        .empty-msg { color: #666; font-style: italic; padding: 10px 0; }
+        .loading-msg { color: #666; padding: 10px 0; }
     </style>
 </head>
 <body>
@@ -34,13 +39,13 @@
     <h1>症状別・事実の抽出</h1>
 
     <div class="setting-section">
-        <small>気になるワードを5つまで設定してください</small>
+        <small>気になる症状ワードを5つまで設定してください</small>
         <div id="wordInputs">
-            <input type="text" class="word-input" placeholder="ワード1">
-            <input type="text" class="word-input" placeholder="ワード2">
-            <input type="text" class="word-input" placeholder="ワード3">
-            <input type="text" class="word-input" placeholder="ワード4">
-            <input type="text" class="word-input" placeholder="ワード5">
+            <input type="text" class="word-input" placeholder="例：下痢">
+            <input type="text" class="word-input" placeholder="例：口を気にする">
+            <input type="text" class="word-input" placeholder="例：食欲なし">
+            <input type="text" class="word-input" placeholder="例：嘔吐">
+            <input type="text" class="word-input" placeholder="例：元気なし">
         </div>
         <button class="save-words-btn" onclick="saveWords()">ワードを更新する</button>
     </div>
@@ -48,11 +53,11 @@
     <div id="filterButtons" class="filter-container"></div>
     <hr>
     <h2 id="currentKeywordTitle">抽出結果</h2>
-    <div id="filteredList"></div>
+    <div id="filteredList"><p class="empty-msg">上のボタンをタップすると日記から抽出します</p></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-        import { getFirestore, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+        import { getFirestore, collection, query, orderBy, getDocs, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAOevKlIPTEu1pgZhyf_a-I2US5KbZQi2c",
@@ -66,18 +71,96 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // ページ読み込み時
         window.onload = function() {
             loadWords();
         };
 
-        // ワードの保存（これは各スマホのローカル保存でOK）
-        window.saveWords = function() {
+        // ワードをFirestoreに保存
+        window.saveWords = async function() {
             const inputs = document.querySelectorAll('.word-input');
-            const words = Array.from(inputs).map(i => i.value).filter(w => w !== "");
-            localStorage.setItem('symptom_words', JSON.stringify(words));
-            alert("ワードを更新しました");
-            loadWords();
+            const words = Array.from(inputs).map(i => i.value.trim()).filter(w => w !== "");
+            try {
+                await setDoc(doc(db, "settings", "symptom_words"), { words });
+                alert("ワードを更新しました");
+                loadWords();
+            } catch(e) {
+                alert("保存に失敗しました");
+            }
         };
 
-        // ワードの読み込みとボタン作成
+        // ワードをFirestoreから読み込み
+        async function loadWords() {
+            try {
+                const snap = await getDoc(doc(db, "settings", "symptom_words"));
+                const words = snap.exists() ? snap.data().words : [];
+
+                const inputs = document.querySelectorAll('.word-input');
+                inputs.forEach((input, i) => { input.value = words[i] || ""; });
+
+                const btnContainer = document.getElementById('filterButtons');
+                btnContainer.innerHTML = "";
+
+                if (words.length === 0) {
+                    btnContainer.innerHTML = "<p style='color:#666;'>ワードを設定してください</p>";
+                    return;
+                }
+
+                words.forEach(word => {
+                    const btn = document.createElement('button');
+                    btn.className = "filter-btn";
+                    btn.textContent = word;
+                    btn.onclick = () => filterByWord(word, btn);
+                    btnContainer.appendChild(btn);
+                });
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        // Firestoreから日記を検索して表示
+        async function filterByWord(word, btn) {
+            // ボタンのアクティブ状態を切り替え
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            document.getElementById('currentKeywordTitle').textContent = `「${word}」の記録`;
+            const listDiv = document.getElementById('filteredList');
+            listDiv.innerHTML = "<p class='loading-msg'>読み込み中...</p>";
+
+            try {
+                const q = query(collection(db, "pet_diary"), orderBy("time", "desc"));
+                const snapshot = await getDocs(q);
+
+                const results = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.text && data.text.includes(word)) {
+                        results.push(data);
+                    }
+                });
+
+                listDiv.innerHTML = "";
+
+                if (results.length === 0) {
+                    listDiv.innerHTML = `<p class="empty-msg">「${word}」を含む記録は見つかりませんでした</p>`;
+                    return;
+                }
+
+                results.forEach(data => {
+                    const item = document.createElement('div');
+                    item.className = "result-item";
+                    const timeStr = (data.time || "").replace('T', ' ');
+                    item.innerHTML = `
+                        <span class="result-time">${timeStr}</span>
+                        <span class="result-text">${data.text}</span>
+                    `;
+                    listDiv.appendChild(item);
+                });
+
+            } catch (e) {
+                listDiv.innerHTML = "<p class='empty-msg'>読み込みに失敗しました。もう一度試してください。</p>";
+            }
+        }
+    </script>
+</body>
+</html>
