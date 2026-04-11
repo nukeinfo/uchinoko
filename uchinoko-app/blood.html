@@ -95,12 +95,10 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // 犬猫判定（元のロジック維持）
     const petType = localStorage.getItem('selected_pet_type') || 'cat';
     const icon = petType === 'dog' ? '🐶' : '🐱';
     document.getElementById('page-title').innerText = icon + " 血液詳細記録 (IDEXX)";
 
-    // 辞書データ（元のまま）
     const dicts = {
         dog: { 'RBC': '【犬：赤血球】酸素を運ぶ役割。貧血や脱水で増減します。','HCT': '【犬：ヘマトクリット】血液中に占める赤血球の容積比。貧血の指標。','HGB': '【犬：ヘモグロビン】赤血球の中の酸素を運ぶタンパク質。','RET': '【犬：網状赤血球】新しく作られた若い赤血球。貧血時の反応を見ます。','NRBC': '【有核赤血球】通常は出ませんが、重度の貧血や脾臓疾患で出現することがあります。','WBC': '【白血球】免疫。感染や炎症、ストレスなどで数値が変動します。','NEU': '【好中球】急性炎症や細菌感染に素早く反応する白血球。','LYM': '【リンパ球】免疫に関連。慢性炎症やウイルスの影響を受けます。','MON': '【単球】慢性的な炎症や組織損傷がある場合に増加します。','EOS': '【好酸球】寄生虫やアレルギーに関連して増加します。','BAS': '【好塩基球】非常に珍しい項目。重度のアレルギー等に関連。','PLT': '【血小板】止血に関与。数値が低いと出血が止まりにくくなります。','MPV': '【平均血小板容積】血小板の大きさ。若い血小板が多いと大きくなります。','PCT': '【血小板クリット】全血液中の血小板の占める割合。' },
         cat: { 'RBC': '【猫：赤血球】腎不全で造血ホルモンが減ると、数値が下がって貧血になります。','HCT': '【猫：ヘマトクリット】猫の貧血を評価する上で最も基本的な指標です。','HGB': '【猫：ヘモグロビン】赤血球内の酸素運搬色素。貧血の程度を評価します。','RET': '【猫：網状赤血球】骨髄で血が作られているかの指標。猫は立ち上がりが遅めです。','NRBC': '【有核赤血球】出現は、貧血のほか心筋症などの重大なサインのこともあります。','WBC': '【白血球】猫は恐怖や興奮（病院など）でも一時的に急増しやすいのが特徴。','NEU': '【好中球】急性炎症、感染症、強いストレスなどで増加します。','LYM': '【リンパ球】ウイルス疾患や慢性炎症、腫瘍などで変動することがあります。','MON': '【単球】慢性炎症や重篤な疾患などで見られることがあります。','EOS': '【好酸球】アレルギー、寄生虫のほか、猫特有の肉芽腫疾患でも上昇。','BAS': '【好塩基球】心糸状虫症やノミアレルギーなどに関連することがあります。','PLT': '【血小板】猫は採血時のストレスで固まりやすく、数値が低く出やすい傾向です。','MPV': '【平均血小板容積】猫では若い血小板が大きくなるため、再生性の指標になります。','PCT': '【血小板クリット】血小板の総重量的な指標。猫では評価に有用です。' }
@@ -116,8 +114,7 @@
 
     window.closeDict = function() { document.getElementById('dictBox').style.display = 'none'; };
 
-    // Claude AI OCR（高精度版）
-    const CLAUDE_API_KEY = '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';
+    // ===== OCR: Netlify Function経由（APIキーはサーバー側で管理）=====
     let selectedFiles = [];
 
     function addFiles(files) {
@@ -134,14 +131,6 @@
     document.getElementById('ocr-camera').addEventListener('change', e => addFiles(e.target.files));
     document.getElementById('ocr-gallery').addEventListener('change', e => addFiles(e.target.files));
 
-    function fileToBase64(file) {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = e => resolve(e.target.result.split(',')[1]);
-            reader.readAsDataURL(file);
-        });
-    }
-
     window.runOCR = async function() {
         if (selectedFiles.length === 0) return alert("画像を選んでください");
         const statusEl = document.getElementById('status');
@@ -149,44 +138,44 @@
         document.getElementById('ocrBtn').disabled = true;
 
         try {
-            const imageContents = [];
+            const results = {};
+            let found = 0;
+
             for (const file of selectedFiles) {
-                const base64 = await fileToBase64(file);
-                const mediaType = file.type || 'image/jpeg';
-                imageContents.push({ type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } });
+                const base64 = await new Promise(resolve => {
+                    const reader = new FileReader();
+                    reader.onload = e => resolve(e.target.result.split(',')[1]);
+                    reader.readAsDataURL(file);
+                });
+
+                const response = await fetch('/.netlify/functions/claude-ocr', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imageBase64: base64, mediaType: file.type || 'image/jpeg' })
+                });
+
+                const result = await response.json();
+                if (result.success && result.data) {
+                    const d = result.data;
+                    if (d.rbc)  results['RBC']  = d.rbc;
+                    if (d.hct)  results['HCT']  = d.hct;
+                    if (d.hgb)  results['HGB']  = d.hgb;
+                    if (d.ret)  results['RET']  = d.ret;
+                    if (d.nrbc) results['NRBC'] = d.nrbc;
+                    if (d.wbc)  results['WBC']  = d.wbc;
+                    if (d.neut) results['NEU']  = d.neut;
+                    if (d.lymp) results['LYM']  = d.lymp;
+                    if (d.mono) results['MON']  = d.mono;
+                    if (d.eos)  results['EOS']  = d.eos;
+                    if (d.baso) results['BAS']  = d.baso;
+                    if (d.plt)  results['PLT']  = d.plt;
+                    if (d.mpv)  results['MPV']  = d.mpv;
+                    if (d.pct)  results['PCT']  = d.pct;
+                    if (d.date) document.getElementById('testDate').value = d.date;
+                }
             }
 
-            imageContents.push({
-                type: 'text',
-                text: `この血液検査の用紙から以下の項目の数値を読み取ってください。黒字・赤字どちらも読み取ってください。
-必ずJSON形式のみで返してください。余分なテキストは不要です。
-{"RBC":"","HCT":"","HGB":"","RET":"","NRBC":"","WBC":"","NEU":"","LYM":"","MON":"","EOS":"","BAS":"","PLT":"","MPV":"","PCT":""}
-数値が見つからない項目は空文字のままにしてください。`
-            });
-
-            const response = await fetch('https://api.anthropic.com/v1/messages', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': CLAUDE_API_KEY,
-                    'anthropic-version': '2023-06-01',
-                    'anthropic-dangerous-direct-browser-access': 'true'
-                },
-                body: JSON.stringify({
-                    model: 'claude-haiku-4-5-20251001',
-                    max_tokens: 1000,
-                    messages: [{ role: 'user', content: imageContents }]
-                })
-            });
-
-            const data = await response.json();
-            const text = data.content[0].text;
-            const jsonMatch = text.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) throw new Error('解析結果が取得できませんでした');
-
-            const values = JSON.parse(jsonMatch[0]);
-            let found = 0;
-            for (const [key, val] of Object.entries(values)) {
+            for (const [key, val] of Object.entries(results)) {
                 const el = document.getElementById('val' + key);
                 if (el && val) { el.value = val; found++; }
             }
@@ -199,7 +188,7 @@
         document.getElementById('ocrBtn').disabled = false;
     };
 
-    // 保存機能（家族で共有できるように変更）
+    // 保存機能
     window.saveTest = async function() {
         const testDate = document.getElementById('testDate').value;
         if (!testDate) return alert("検査日を選択してください");
