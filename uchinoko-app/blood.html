@@ -148,7 +148,7 @@
                     reader.readAsDataURL(file);
                 });
 
-                const response = await fetch('https://chimerical-cheesecake-ef22ef.netlify.app/.netlify/functions/ocr', {
+                const response = await fetch('https://chimerical-cheesecake-ef22ef.netlify.apphttps://chimerical-cheesecake-ef22ef.netlify.app/.netlify/functions/ocr', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ imageBase64: base64, mediaType: file.type || 'image/jpeg' })
