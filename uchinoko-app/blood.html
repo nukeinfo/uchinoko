@@ -45,6 +45,7 @@
         <div id="status" style="margin-top:8px;">画像を選ぶと読み取りを開始できます</div>
         <canvas id="processCanvas" style="display:none;"></canvas>
     </div>
+
     <div class="test-group">
         <label>検査日:</label>
         <input type="date" id="testDate" style="width:100%; padding:10px; margin:10px 0 20px; border:2px solid #000; border-radius:5px; box-sizing:border-box; -webkit-appearance:none; appearance:none;">
@@ -114,7 +115,7 @@
 
     window.closeDict = function() { document.getElementById('dictBox').style.display = 'none'; };
 
-    // ===== OCR: Netlify Function経由（APIキーはサーバー側で管理）=====
+    // ===== OCR: Netlify Function経由 =====
     let selectedFiles = [];
 
     function addFiles(files) {
@@ -138,7 +139,6 @@
         document.getElementById('ocrBtn').disabled = true;
 
         try {
-            const results = {};
             let found = 0;
 
             for (const file of selectedFiles) {
@@ -148,37 +148,21 @@
                     reader.readAsDataURL(file);
                 });
 
-                const response = await fetch('/.netlify/functions/claude-ocr', {
+                const response = await fetch('/.netlify/functions/ocr', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ imageBase64: base64, mediaType: file.type || 'image/jpeg' })
                 });
 
                 const result = await response.json();
-                if (result.success && result.data) {
-                    const d = result.data;
-                    if (d.rbc)  results['RBC']  = d.rbc;
-                    if (d.hct)  results['HCT']  = d.hct;
-                    if (d.hgb)  results['HGB']  = d.hgb;
-                    if (d.ret)  results['RET']  = d.ret;
-                    if (d.nrbc) results['NRBC'] = d.nrbc;
-                    if (d.wbc)  results['WBC']  = d.wbc;
-                    if (d.neut) results['NEU']  = d.neut;
-                    if (d.lymp) results['LYM']  = d.lymp;
-                    if (d.mono) results['MON']  = d.mono;
-                    if (d.eos)  results['EOS']  = d.eos;
-                    if (d.baso) results['BAS']  = d.baso;
-                    if (d.plt)  results['PLT']  = d.plt;
-                    if (d.mpv)  results['MPV']  = d.mpv;
-                    if (d.pct)  results['PCT']  = d.pct;
-                    if (d.date) document.getElementById('testDate').value = d.date;
+                if (result.success && result.values) {
+                    for (const [key, val] of Object.entries(result.values)) {
+                        const el = document.getElementById('val' + key);
+                        if (el && val) { el.value = val; found++; }
+                    }
                 }
             }
 
-            for (const [key, val] of Object.entries(results)) {
-                const el = document.getElementById('val' + key);
-                if (el && val) { el.value = val; found++; }
-            }
             statusEl.innerText = `✅ 解析完了！ ${found}項目を自動入力しました。残りは手動で入力してください。`;
 
         } catch(e) {
