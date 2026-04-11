@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -11,61 +12,27 @@
         .container { max-width: 500px; margin: 0 auto; width: 100%; }
         h1 { font-size: 18px; border-bottom: 2px solid #000; padding-bottom: 10px; }
         .back-btn { display: inline-block; margin: 10px 0; text-decoration: none; color: #000; font-weight: bold; }
-        .date-btn {
-            display: block;
-            width: 100%;
-            background: #fff;
-            border: 2px solid #000;
-            border-radius: 10px;
-            padding: 15px 20px;
-            margin-bottom: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: left;
-            box-shadow: 3px 3px 0px #000;
-        }
+        .date-btn { display: block; width: 100%; background: #fff; border: 2px solid #000; border-radius: 10px; padding: 15px 20px; margin-bottom: 12px; font-size: 16px; font-weight: bold; cursor: pointer; text-align: left; box-shadow: 3px 3px 0px #000; }
         .date-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0px #000; }
-        .detail-box {
-            display: none;
-            background: #fff;
-            border: 2px solid #000;
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: -8px;
-            margin-bottom: 16px;
-        }
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 0;
-            border-bottom: 1px solid #eee;
-            font-size: 14px;
-        }
+        .detail-box { display: none; background: #fff; border: 2px solid #000; border-radius: 10px; padding: 15px; margin-top: -8px; margin-bottom: 16px; }
+        .detail-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 14px; }
         .detail-row:last-child { border-bottom: none; }
         .detail-label { font-weight: bold; color: #333; }
         .detail-value { color: #000; }
         .no-data { text-align: center; color: #888; margin-top: 40px; font-size: 15px; }
-        .group-title {
-            font-weight: bold;
-            border-left: 5px solid #adff2f;
-            padding-left: 10px;
-            margin: 12px 0 6px;
-            font-size: 13px;
-            color: #555;
-        }
+        .group-title { font-weight: bold; border-left: 5px solid #adff2f; padding-left: 10px; margin: 12px 0 6px; font-size: 13px; color: #555; }
     </style>
 </head>
 <body>
 <div class="container">
     <a href="blood.html" class="back-btn">← 戻る</a>
     <h1 id="page-title">📋 血液検査履歴</h1>
-    <div id="list"></div>
+    <div id="list"><p style="text-align:center; color:#888;">読み込み中...</p></div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyAOevKlIPTEu1pgZhyf_a-I2US5KbZQi2c",
@@ -81,23 +48,14 @@
 
     const petType = localStorage.getItem('selected_pet_type') || 'cat';
     const icon = petType === 'dog' ? '🐶' : '🐱';
-    document.getElementById('page-title').innerText = icon + ' 血液検査履歴';
+    document.getElementById('page-title').innerText = icon + ' 📋 血液検査履歴';
 
     const labels = {
-        RBC: 'RBC (赤血球数)',
-        HCT: 'HCT (ヘマトクリット)',
-        HGB: 'HGB (ヘモグロビン)',
-        RET: 'RET (網状赤血球数)',
-        NRBC: '有核赤血球 (nRBC)',
-        WBC: 'WBC (白血球計)',
-        NEU: 'Neu (好中球)',
-        LYM: 'Lym (リンパ球)',
-        MON: 'Mon (単球)',
-        EOS: 'Eos (好酸球)',
-        BAS: 'Bas (好塩基球)',
-        PLT: 'PLT (血小板数)',
-        MPV: 'MPV (平均血小板容積)',
-        PCT: 'PCT (血小板クリット)',
+        RBC: 'RBC (赤血球数)', HCT: 'HCT (ヘマトクリット)', HGB: 'HGB (ヘモグロビン)',
+        RET: 'RET (網状赤血球数)', NRBC: '有核赤血球 (nRBC)', WBC: 'WBC (白血球計)',
+        NEU: 'Neu (好中球)', LYM: 'Lym (リンパ球)', MON: 'Mon (単球)',
+        EOS: 'Eos (好酸球)', BAS: 'Bas (好塩基球)', PLT: 'PLT (血小板数)',
+        MPV: 'MPV (平均血小板容積)', PCT: 'PCT (血小板クリット)',
     };
 
     const groups = {
@@ -107,53 +65,58 @@
     };
 
     try {
-        const q = query(collection(db, "blood_tests"), orderBy("testDate", "desc"));
-        const snapshot = await getDocs(q);
+        const snapshot = await getDocs(collection(db, "blood_tests"));
         const listEl = document.getElementById('list');
+        listEl.innerHTML = '';
 
-        if (snapshot.empty) {
+        const docs = [];
+        snapshot.forEach(doc => docs.push({ id: doc.id, d: doc.data() }));
+        docs.sort((a, b) => a.d.testDate < b.d.testDate ? 1 : -1);
+
+        const filtered = docs.filter(({d}) => !d.petType || d.petType === petType);
+
+        if (filtered.length === 0) {
             listEl.innerHTML = '<p class="no-data">まだ記録がありません</p>';
-        } else {
-            snapshot.forEach((doc, i) => {
-                const d = doc.data();
-                if (d.petType && d.petType !== petType) return;
-
-                const id = 'detail_' + doc.id;
-                const btn = document.createElement('button');
-                btn.className = 'date-btn';
-                btn.innerText = '📅 ' + d.testDate;
-                btn.onclick = () => {
-                    const box = document.getElementById(id);
-                    box.style.display = box.style.display === 'block' ? 'none' : 'block';
-                };
-
-                const box = document.createElement('div');
-                box.className = 'detail-box';
-                box.id = id;
-
-                for (const [groupName, keys] of Object.entries(groups)) {
-                    const hasData = keys.some(k => d[k]);
-                    if (!hasData) continue;
-                    const gt = document.createElement('div');
-                    gt.className = 'group-title';
-                    gt.innerText = groupName;
-                    box.appendChild(gt);
-
-                    keys.forEach(key => {
-                        if (!d[key]) return;
-                        const row = document.createElement('div');
-                        row.className = 'detail-row';
-                        row.innerHTML = `<span class="detail-label">${labels[key]}</span><span class="detail-value">${d[key]}</span>`;
-                        box.appendChild(row);
-                    });
-                }
-
-                listEl.appendChild(btn);
-                listEl.appendChild(box);
-            });
+            return;
         }
+
+        filtered.forEach(({id, d}) => {
+            const btnId = 'detail_' + id;
+
+            const btn = document.createElement('button');
+            btn.className = 'date-btn';
+            btn.innerText = '📅 ' + d.testDate;
+            btn.onclick = () => {
+                const box = document.getElementById(btnId);
+                box.style.display = box.style.display === 'block' ? 'none' : 'block';
+            };
+
+            const box = document.createElement('div');
+            box.className = 'detail-box';
+            box.id = btnId;
+
+            for (const [groupName, keys] of Object.entries(groups)) {
+                const hasData = keys.some(k => d[k]);
+                if (!hasData) continue;
+                const gt = document.createElement('div');
+                gt.className = 'group-title';
+                gt.innerText = groupName;
+                box.appendChild(gt);
+                keys.forEach(key => {
+                    if (!d[key]) return;
+                    const row = document.createElement('div');
+                    row.className = 'detail-row';
+                    row.innerHTML = `<span class="detail-label">${labels[key]}</span><span class="detail-value">${d[key]}</span>`;
+                    box.appendChild(row);
+                });
+            }
+
+            listEl.appendChild(btn);
+            listEl.appendChild(box);
+        });
+
     } catch(e) {
-        document.getElementById('list').innerHTML = '<p class="no-data">読み込みに失敗しました</p>';
+        document.getElementById('list').innerHTML = '<p class="no-data">読み込みに失敗しました<br><small>' + e.message + '</small></p>';
         console.error(e);
     }
 </script>
