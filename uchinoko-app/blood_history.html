@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -64,16 +63,11 @@
         '血小板（止血）': ['PLT','MPV','PCT'],
     };
 
-    try {
-        const snapshot = await getDocs(collection(db, "blood_tests"));
-        const listEl = document.getElementById('list');
-        listEl.innerHTML = '';
-
-        const docs = [];
-        snapshot.forEach(doc => docs.push({ id: doc.id, d: doc.data() }));
+    function renderList(docs, petType, listEl) {
         docs.sort((a, b) => a.d.testDate < b.d.testDate ? 1 : -1);
-
         const filtered = docs.filter(({d}) => !d.petType || d.petType === petType);
+
+        listEl.innerHTML = '';
 
         if (filtered.length === 0) {
             listEl.innerHTML = '<p class="no-data">まだ記録がありません</p>';
@@ -86,7 +80,7 @@
             const btn = document.createElement('button');
             btn.className = 'date-btn';
             btn.innerText = '📅 ' + d.testDate;
-            btn.onclick = () => {
+            btn.onclick = function() {
                 const box = document.getElementById(btnId);
                 box.style.display = box.style.display === 'block' ? 'none' : 'block';
             };
@@ -96,17 +90,17 @@
             box.id = btnId;
 
             for (const [groupName, keys] of Object.entries(groups)) {
-                const hasData = keys.some(k => d[k]);
+                const hasData = keys.some(function(k) { return d[k]; });
                 if (!hasData) continue;
                 const gt = document.createElement('div');
                 gt.className = 'group-title';
                 gt.innerText = groupName;
                 box.appendChild(gt);
-                keys.forEach(key => {
+                keys.forEach(function(key) {
                     if (!d[key]) return;
                     const row = document.createElement('div');
                     row.className = 'detail-row';
-                    row.innerHTML = `<span class="detail-label">${labels[key]}</span><span class="detail-value">${d[key]}</span>`;
+                    row.innerHTML = '<span class="detail-label">' + labels[key] + '</span><span class="detail-value">' + d[key] + '</span>';
                     box.appendChild(row);
                 });
             }
@@ -114,11 +108,19 @@
             listEl.appendChild(btn);
             listEl.appendChild(box);
         });
+    }
 
-    } catch(e) {
+    getDocs(collection(db, "blood_tests")).then(function(snapshot) {
+        const listEl = document.getElementById('list');
+        const docs = [];
+        snapshot.forEach(function(doc) {
+            docs.push({ id: doc.id, d: doc.data() });
+        });
+        renderList(docs, petType, listEl);
+    }).catch(function(e) {
         document.getElementById('list').innerHTML = '<p class="no-data">読み込みに失敗しました<br><small>' + e.message + '</small></p>';
         console.error(e);
-    }
+    });
 </script>
 </body>
 </html>
