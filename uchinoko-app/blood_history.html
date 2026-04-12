@@ -13,14 +13,17 @@
         .back-btn { display: inline-block; margin: 10px 0; text-decoration: none; color: #000; font-weight: bold; }
         .date-btn { display: block; width: 100%; background: #fff; border: 2px solid #000; border-radius: 10px; padding: 15px 20px; margin-bottom: 4px; font-size: 16px; font-weight: bold; cursor: pointer; text-align: left; box-shadow: 3px 3px 0px #000; }
         .detail-box { display: none; background: #fff; border: 2px solid #000; border-radius: 10px; padding: 15px; margin-bottom: 16px; }
-        .detail-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+        .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 14px; }
         .detail-row:last-child { border-bottom: none; }
-        .detail-label { font-weight: bold; color: #333; }
-        .detail-value { color: #000; }
+        .detail-label { font-weight: bold; color: #333; flex: 1; }
+        .detail-value { color: #000; min-width: 80px; text-align: right; cursor: pointer; padding: 4px 8px; border-radius: 5px; }
+        .detail-value:hover { background: #f0f0f0; }
+        .detail-input { width: 90px; padding: 4px 6px; border: 2px solid #00796b; border-radius: 5px; text-align: center; font-size: 14px; display: none; }
         .no-data { text-align: center; color: #888; margin-top: 40px; font-size: 15px; }
         .group-title { font-weight: bold; border-left: 5px solid #adff2f; padding-left: 10px; margin: 12px 0 6px; font-size: 13px; color: #555; }
-        .delete-btn { display: block; width: 100%; background: #fff; border: 2px solid #ff4444; border-radius: 8px; padding: 10px; margin-top: 12px; font-size: 14px; font-weight: bold; color: #ff4444; cursor: pointer; text-align: center; }
-        .delete-btn:active { background: #fff0f0; }
+        .save-btn { display: none; width: 100%; background: #adff2f; border: 2px solid #000; border-radius: 8px; padding: 12px; margin-top: 12px; font-size: 15px; font-weight: bold; color: #000; cursor: pointer; text-align: center; box-shadow: 2px 2px 0px #000; }
+        .delete-btn { display: block; width: 100%; background: #fff; border: 2px solid #ff4444; border-radius: 8px; padding: 10px; margin-top: 8px; font-size: 14px; font-weight: bold; color: #ff4444; cursor: pointer; text-align: center; }
+        .edit-hint { font-size: 11px; color: #888; text-align: center; margin-top: 8px; }
     </style>
 </head>
 <body>
@@ -50,18 +53,27 @@
     document.getElementById('page-title').innerText = icon + ' 📋 血液検査履歴';
 
     var labels = {
-        RBC: 'RBC (赤血球数)', HCT: 'HCT (ヘマトクリット)', HGB: 'HGB (ヘモグロビン)',
-        RET: 'RET (網状赤血球数)', NRBC: '有核赤血球 (nRBC)', WBC: 'WBC (白血球計)',
-        NEU: 'Neu (好中球)', LYM: 'Lym (リンパ球)', MON: 'Mon (単球)',
-        EOS: 'Eos (好酸球)', BAS: 'Bas (好塩基球)', PLT: 'PLT (血小板数)',
-        MPV: 'MPV (平均血小板容積)', PCT: 'PCT (血小板クリット)'
+        RBC: '赤血球数(RBC)', HCT: 'ヘマトクリット(HCT)', HGB: 'ヘモグロビン濃度(HGB)',
+        MCV: '平均赤血球容積(MCV)', MCH: '平均赤血球ヘモグロビン量(MCH)',
+        MCHC: '平均赤血球ヘモグロビン濃度(MCHC)', RDW: '赤血球分布幅',
+        PRET: '%網状赤血球', RET: '網状赤血球数(RET)',
+        RETICHGB: '網状赤血球ヘモグロビン(RETIC-HGB)',
+        WBC: '白血球数(WBC)', NEU: '好中球%(Neu)', LYM: 'リンパ球%(Lym)',
+        MON: '単球%(Mon)', EOS: '好酸球%(Eos)', BAS: '好塩基球%(Bas)',
+        NEUN: '好中球数(Neu)', LYMN: 'リンパ球数(Lym)', MONN: '単球数(Mon)',
+        EOSN: '好酸球数(Eos)', BASN: '好塩基球数(Bas)',
+        PLT: '血小板(PLT)', MPV: '平均血小板容積(MPV)', PCT: '血小板クリット(PCT)'
     };
 
     var groups = {
-        '赤血球系（貧血の評価）': ['RBC','HCT','HGB','RET','NRBC'],
-        '白血球系内訳': ['WBC','NEU','LYM','MON','EOS','BAS'],
+        '赤血球系（貧血の評価）': ['RBC','HCT','HGB','MCV','MCH','MCHC','RDW','PRET','RET','RETICHGB'],
+        '白血球系（免疫の評価）': ['WBC','NEU','LYM','MON','EOS','BAS','NEUN','LYMN','MONN','EOSN','BASN'],
         '血小板（止血）': ['PLT','MPV','PCT']
     };
+
+    var allKeys = ['RBC','HCT','HGB','MCV','MCH','MCHC','RDW','PRET','RET','RETICHGB',
+                   'WBC','NEU','LYM','MON','EOS','BAS','NEUN','LYMN','MONN','EOSN','BASN',
+                   'PLT','MPV','PCT'];
 
     function loadList() {
         db.collection('blood_tests').get().then(function(snapshot) {
@@ -90,6 +102,8 @@
                 var id = item.id;
                 var d = item.d;
                 var btnId = 'detail_' + id;
+                var saveBtnId = 'save_' + id;
+                var editData = {};
 
                 var btn = document.createElement('button');
                 btn.className = 'date-btn';
@@ -103,9 +117,15 @@
                 box.className = 'detail-box';
                 box.id = btnId;
 
+                // ヒント
+                var hint = document.createElement('p');
+                hint.className = 'edit-hint';
+                hint.innerText = '✏️ 数値をタップすると編集できます';
+                box.appendChild(hint);
+
                 Object.keys(groups).forEach(function(groupName) {
                     var keys = groups[groupName];
-                    var hasData = keys.some(function(k) { return d[k]; });
+                    var hasData = keys.some(function(k) { return d[k] || d[k] === 0; });
                     if (!hasData) return;
 
                     var gt = document.createElement('div');
@@ -114,13 +134,76 @@
                     box.appendChild(gt);
 
                     keys.forEach(function(key) {
-                        if (!d[key]) return;
+                        if (!d[key] && d[key] !== 0) return;
+                        editData[key] = d[key];
+
                         var row = document.createElement('div');
                         row.className = 'detail-row';
-                        row.innerHTML = '<span class="detail-label">' + labels[key] + '</span><span class="detail-value">' + d[key] + '</span>';
+
+                        var label = document.createElement('span');
+                        label.className = 'detail-label';
+                        label.innerText = labels[key] || key;
+
+                        var valueSpan = document.createElement('span');
+                        valueSpan.className = 'detail-value';
+                        valueSpan.innerText = d[key];
+                        valueSpan.id = 'val_' + id + '_' + key;
+
+                        var input = document.createElement('input');
+                        input.type = 'number';
+                        input.className = 'detail-input';
+                        input.value = d[key];
+                        input.id = 'inp_' + id + '_' + key;
+                        input.step = '0.01';
+
+                        // 数値タップで編集モード
+                        valueSpan.onclick = function() {
+                            valueSpan.style.display = 'none';
+                            input.style.display = 'inline-block';
+                            input.focus();
+                            document.getElementById(saveBtnId).style.display = 'block';
+                        };
+
+                        // 入力完了で表示更新
+                        input.onblur = function() {
+                            var newVal = input.value;
+                            if (newVal !== '') {
+                                valueSpan.innerText = newVal;
+                                editData[key] = newVal;
+                            }
+                            valueSpan.style.display = 'inline-block';
+                            input.style.display = 'none';
+                        };
+
+                        row.appendChild(label);
+                        row.appendChild(valueSpan);
+                        row.appendChild(input);
                         box.appendChild(row);
                     });
                 });
+
+                // 保存ボタン
+                var saveBtn = document.createElement('button');
+                saveBtn.className = 'save-btn';
+                saveBtn.id = saveBtnId;
+                saveBtn.innerText = '💾 修正を保存する';
+                saveBtn.onclick = function() {
+                    var updateData = {};
+                    allKeys.forEach(function(key) {
+                        var inp = document.getElementById('inp_' + id + '_' + key);
+                        var val = document.getElementById('val_' + id + '_' + key);
+                        if (inp) updateData[key] = inp.value || (val ? val.innerText : '');
+                        else if (d[key]) updateData[key] = d[key];
+                    });
+                    db.collection('blood_tests').doc(id).update(updateData).then(function() {
+                        alert('保存しました！');
+                        saveBtn.style.display = 'none';
+                        loadList();
+                    }).catch(function(e) {
+                        alert('保存に失敗しました: ' + e.message);
+                    });
+                };
+                box.appendChild(saveBtn);
 
                 // 削除ボタン
                 var delBtn = document.createElement('button');
