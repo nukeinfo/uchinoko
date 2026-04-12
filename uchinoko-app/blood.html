@@ -49,26 +49,36 @@
     <div class="test-group">
         <label>検査日:</label>
         <input type="date" id="testDate" style="width:100%; padding:10px; margin:10px 0 20px; border:2px solid #000; border-radius:5px; box-sizing:border-box; -webkit-appearance:none; appearance:none;">
-        
-        <div class="group-title">赤血球系（貧血の評価）</div>
-        <div class="test-row"><span class="test-label" onclick="showDict('RBC')">RBC (赤血球数)</span><input type="number" id="valRBC" class="test-input" step="0.01"></div>
-        <div class="test-row"><span class="test-label" onclick="showDict('HCT')">HCT (ヘマトクリット)</span><input type="number" id="valHCT" class="test-input" step="0.1"></div>
-        <div class="test-row"><span class="test-label" onclick="showDict('HGB')">HGB (ヘモグロビン)</span><input type="number" id="valHGB" class="test-input" step="0.1"></div>
-        <div class="test-row"><span class="test-label" onclick="showDict('RET')">RET (網状赤血球数)</span><input type="number" id="valRET" class="test-input"></div>
-        <div class="test-row"><span class="test-label" onclick="showDict('NRBC')">有核赤血球 (nRBC)</span><input type="number" id="valNRBC" class="test-input" step="0.1"></div>
 
-        <div class="group-title">白血球系内訳</div>
-        <div class="test-row"><span class="test-label" onclick="showDict('WBC')">WBC (白血球計)</span><input type="number" id="valWBC" class="test-input"></div>
-        <div class="test-row"><span class="test-label" onclick="showDict('NEU')">Neu (好中球)</span><input type="number" id="valNEU" class="test-input"></div>
-        <div class="test-row"><span class="test-label" onclick="showDict('LYM')">Lym (リンパ球)</span><input type="number" id="valLYM" class="test-input"></div>
-        <div class="test-row"><span class="test-label" onclick="showDict('MON')">Mon (単球)</span><input type="number" id="valMON" class="test-input"></div>
-        <div class="test-row"><span class="test-label" onclick="showDict('EOS')">Eos (好酸球)</span><input type="number" id="valEOS" class="test-input"></div>
-        <div class="test-row"><span class="test-label" onclick="showDict('BAS')">Bas (好塩基球)</span><input type="number" id="valBAS" class="test-input"></div>
+        <div class="group-title">赤血球系（貧血の評価）</div>
+        <div class="test-row"><span class="test-label" onclick="showDict('RBC')">赤血球数(RBC)</span><input type="number" id="valRBC" class="test-input" step="0.01"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('HCT')">ヘマトクリット(HCT)</span><input type="number" id="valHCT" class="test-input" step="0.1"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('HGB')">ヘモグロビン濃度(HGB)</span><input type="number" id="valHGB" class="test-input" step="0.1"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('MCV')">平均赤血球容積(MCV)</span><input type="number" id="valMCV" class="test-input" step="0.1"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('MCH')">平均赤血球ヘモグロビン量(MCH)</span><input type="number" id="valMCH" class="test-input" step="0.1"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('MCHC')">平均赤血球ヘモグロビン濃度(MCHC)</span><input type="number" id="valMCHC" class="test-input" step="0.1"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('RDW')">赤血球分布幅</span><input type="number" id="valRDW" class="test-input" step="0.1"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('PRET')">%網状赤血球</span><input type="number" id="valPRET" class="test-input" step="0.1"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('RET')">網状赤血球数(RET)</span><input type="number" id="valRET" class="test-input" step="0.1"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('RETICHGB')">網状赤血球ヘモグロビン(RETIC-HGB)</span><input type="number" id="valRETICHGB" class="test-input" step="0.1"></div>
+
+        <div class="group-title">白血球系（免疫の評価）</div>
+        <div class="test-row"><span class="test-label" onclick="showDict('WBC')">白血球数(WBC)</span><input type="number" id="valWBC" class="test-input"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('NEU')">好中球%(Neu)</span><input type="number" id="valNEU" class="test-input" step="0.1"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('LYM')">リンパ球%(Lym)</span><input type="number" id="valLYM" class="test-input" step="0.1"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('MON')">単球%(Mon)</span><input type="number" id="valMON" class="test-input" step="0.1"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('EOS')">好酸球%(Eos)</span><input type="number" id="valEOS" class="test-input" step="0.1"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('BAS')">好塩基球%(Bas)</span><input type="number" id="valBAS" class="test-input" step="0.1"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('NEUN')">好中球数(Neu)</span><input type="number" id="valNEUN" class="test-input" step="0.01"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('LYMN')">リンパ球数(Lym)</span><input type="number" id="valLYMN" class="test-input" step="0.01"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('MONN')">単球数(Mon)</span><input type="number" id="valMONN" class="test-input" step="0.01"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('EOSN')">好酸球数(Eos)</span><input type="number" id="valEOSN" class="test-input" step="0.01"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('BASN')">好塩基球数(Bas)</span><input type="number" id="valBASN" class="test-input" step="0.01"></div>
 
         <div class="group-title">血小板（止血）</div>
-        <div class="test-row"><span class="test-label" onclick="showDict('PLT')">PLT (血小板数)</span><input type="number" id="valPLT" class="test-input"></div>
-        <div class="test-row"><span class="test-label" onclick="showDict('MPV')">MPV (平均血小板容積)</span><input type="number" id="valMPV" class="test-input" step="0.1"></div>
-        <div class="test-row"><span class="test-label" onclick="showDict('PCT')">PCT (血小板クリット)</span><input type="number" id="valPCT" class="test-input" step="0.01"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('PLT')">血小板(PLT)</span><input type="number" id="valPLT" class="test-input"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('MPV')">平均血小板容積(MPV)</span><input type="number" id="valMPV" class="test-input" step="0.1"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('PCT')">血小板クリット(PCT)</span><input type="number" id="valPCT" class="test-input" step="0.01"></div>
 
         <button class="save-btn" onclick="saveTest()">記録を保存する</button>
     </div>
@@ -101,13 +111,63 @@
     document.getElementById('title-text').innerText = icon + " 血液詳細記録 (IDEXX)";
 
     const dicts = {
-        dog: { 'RBC': '【犬：赤血球】酸素を運ぶ役割。貧血や脱水で増減します。','HCT': '【犬：ヘマトクリット】血液中に占める赤血球の容積比。貧血の指標。','HGB': '【犬：ヘモグロビン】赤血球の中の酸素を運ぶタンパク質。','RET': '【犬：網状赤血球】新しく作られた若い赤血球。貧血時の反応を見ます。','NRBC': '【有核赤血球】通常は出ませんが、重度の貧血や脾臓疾患で出現することがあります。','WBC': '【白血球】免疫。感染や炎症、ストレスなどで数値が変動します。','NEU': '【好中球】急性炎症や細菌感染に素早く反応する白血球。','LYM': '【リンパ球】免疫に関連。慢性炎症やウイルスの影響を受けます。','MON': '【単球】慢性的な炎症や組織損傷がある場合に増加します。','EOS': '【好酸球】寄生虫やアレルギーに関連して増加します。','BAS': '【好塩基球】非常に珍しい項目。重度のアレルギー等に関連。','PLT': '【血小板】止血に関与。数値が低いと出血が止まりにくくなります。','MPV': '【平均血小板容積】血小板の大きさ。若い血小板が多いと大きくなります。','PCT': '【血小板クリット】全血液中の血小板の占める割合。' },
-        cat: { 'RBC': '【猫：赤血球】腎不全で造血ホルモンが減ると、数値が下がって貧血になります。','HCT': '【猫：ヘマトクリット】猫の貧血を評価する上で最も基本的な指標です。','HGB': '【猫：ヘモグロビン】赤血球内の酸素運搬色素。貧血の程度を評価します。','RET': '【猫：網状赤血球】骨髄で血が作られているかの指標。猫は立ち上がりが遅めです。','NRBC': '【有核赤血球】出現は、貧血のほか心筋症などの重大なサインのこともあります。','WBC': '【白血球】猫は恐怖や興奮（病院など）でも一時的に急増しやすいのが特徴。','NEU': '【好中球】急性炎症、感染症、強いストレスなどで増加します。','LYM': '【リンパ球】ウイルス疾患や慢性炎症、腫瘍などで変動することがあります。','MON': '【単球】慢性炎症や重篤な疾患などで見られることがあります。','EOS': '【好酸球】アレルギー、寄生虫のほか、猫特有の肉芽腫疾患でも上昇。','BAS': '【好塩基球】心糸状虫症やノミアレルギーなどに関連することがあります。','PLT': '【血小板】猫は採血時のストレスで固まりやすく、数値が低く出やすい傾向です。','MPV': '【平均血小板容積】猫では若い血小板が大きくなるため、再生性の指標になります。','PCT': '【血小板クリット】血小板の総重量的な指標。猫では評価に有用です。' }
+        dog: {
+            'RBC':      '【赤血球数】酸素を全身に運ぶ細胞の数です。貧血や脱水などで増減します。',
+            'HCT':      '【ヘマトクリット】血液全体に占める赤血球の割合です。貧血の基本的な指標です。',
+            'HGB':      '【ヘモグロビン濃度】赤血球の中にある酸素を運ぶタンパク質の量です。',
+            'MCV':      '【平均赤血球容積】赤血球1個の平均的な大きさです。貧血の種類を調べる手がかりになります。',
+            'MCH':      '【平均赤血球ヘモグロビン量】赤血球1個に含まれるヘモグロビンの平均量です。',
+            'MCHC':     '【平均赤血球ヘモグロビン濃度】赤血球の中のヘモグロビンの濃さです。貧血の性質を知る指標です。',
+            'RDW':      '【赤血球分布幅】赤血球の大きさのばらつきを示します。数値が高いと様々な大きさの赤血球が混在しています。',
+            'PRET':     '【%網状赤血球】全赤血球に占める若い赤血球の割合です。骨髄が活発に血を作っているかの目安になります。',
+            'RET':      '【網状赤血球数】骨髄で作られたばかりの若い赤血球の数です。貧血への骨髄の反応を見ます。',
+            'RETICHGB': '【網状赤血球ヘモグロビン】若い赤血球に含まれるヘモグロビン量です。鉄の利用状態を反映します。',
+            'WBC':      '【白血球数】免疫を担う細胞の総数です。感染や炎症、ストレスなどで変動します。',
+            'NEU':      '【好中球%】白血球全体に占める好中球の割合です。急性炎症や細菌感染で増加します。',
+            'LYM':      '【リンパ球%】白血球全体に占めるリンパ球の割合です。ウイルス感染や免疫に関連します。',
+            'MON':      '【単球%】白血球全体に占める単球の割合です。慢性炎症や組織の損傷で増加します。',
+            'EOS':      '【好酸球%】白血球全体に占める好酸球の割合です。寄生虫やアレルギーで増加します。',
+            'BAS':      '【好塩基球%】白血球全体に占める好塩基球の割合です。非常に珍しい項目で重度のアレルギー等に関連します。',
+            'NEUN':     '【好中球数】血液中の好中球の実数です。急性炎症や細菌感染への反応を示します。',
+            'LYMN':     '【リンパ球数】血液中のリンパ球の実数です。免疫状態を知る指標です。',
+            'MONN':     '【単球数】血液中の単球の実数です。慢性炎症などで変動します。',
+            'EOSN':     '【好酸球数】血液中の好酸球の実数です。アレルギーや寄生虫の影響を反映します。',
+            'BASN':     '【好塩基球数】血液中の好塩基球の実数です。通常は非常に少ない細胞です。',
+            'PLT':      '【血小板】止血に関わる細胞の数です。少ないと出血が止まりにくくなります。',
+            'MPV':      '【平均血小板容積】血小板1個の平均的な大きさです。若い血小板が多いと大きくなります。',
+            'PCT':      '【血小板クリット】血液全体に占める血小板の割合です。'
+        },
+        cat: {
+            'RBC':      '【赤血球数】酸素を全身に運ぶ細胞の数です。腎不全などで減少して貧血になることがあります。',
+            'HCT':      '【ヘマトクリット】血液全体に占める赤血球の割合です。猫の貧血を評価する最も基本的な指標です。',
+            'HGB':      '【ヘモグロビン濃度】赤血球内の酸素運搬色素の量です。貧血の程度を評価します。',
+            'MCV':      '【平均赤血球容積】赤血球1個の平均的な大きさです。貧血の種類を分類する手がかりになります。',
+            'MCH':      '【平均赤血球ヘモグロビン量】赤血球1個に含まれるヘモグロビンの平均量です。',
+            'MCHC':     '【平均赤血球ヘモグロビン濃度】赤血球の中のヘモグロビンの濃さです。貧血の性質を知る指標です。',
+            'RDW':      '【赤血球分布幅】赤血球の大きさのばらつきを示します。数値が高いと様々な大きさの赤血球が混在しています。',
+            'PRET':     '【%網状赤血球】全赤血球に占める若い赤血球の割合です。骨髄が活発に血を作っているかの目安になります。',
+            'RET':      '【網状赤血球数】骨髄で作られたばかりの若い赤血球の数です。猫は貧血への反応が遅めです。',
+            'RETICHGB': '【網状赤血球ヘモグロビン】若い赤血球に含まれるヘモグロビン量です。鉄の利用状態を反映します。',
+            'WBC':      '【白血球数】免疫を担う細胞の総数です。猫は病院でのストレスや恐怖でも急増しやすい特徴があります。',
+            'NEU':      '【好中球%】白血球全体に占める好中球の割合です。急性炎症や感染症、ストレスで増加します。',
+            'LYM':      '【リンパ球%】白血球全体に占めるリンパ球の割合です。ウイルス疾患や慢性炎症で変動します。',
+            'MON':      '【単球%】白血球全体に占める単球の割合です。慢性炎症や重篤な疾患で見られることがあります。',
+            'EOS':      '【好酸球%】白血球全体に占める好酸球の割合です。アレルギーや寄生虫のほか猫特有の肉芽腫疾患でも上昇します。',
+            'BAS':      '【好塩基球%】白血球全体に占める好塩基球の割合です。心糸状虫症やノミアレルギーなどに関連することがあります。',
+            'NEUN':     '【好中球数】血液中の好中球の実数です。急性炎症や細菌感染への反応を示します。',
+            'LYMN':     '【リンパ球数】血液中のリンパ球の実数です。免疫状態を知る指標です。',
+            'MONN':     '【単球数】血液中の単球の実数です。慢性炎症などで変動します。',
+            'EOSN':     '【好酸球数】血液中の好酸球の実数です。アレルギーや寄生虫の影響を反映します。',
+            'BASN':     '【好塩基球数】血液中の好塩基球の実数です。通常は非常に少ない細胞です。',
+            'PLT':      '【血小板】止血に関わる細胞の数です。猫は採血時のストレスで固まりやすく低く出やすい傾向があります。',
+            'MPV':      '【平均血小板容積】血小板1個の平均的な大きさです。猫では若い血小板が大きくなるため再生性の指標になります。',
+            'PCT':      '【血小板クリット】血液全体に占める血小板の割合です。猫では評価に有用です。'
+        }
     };
 
     window.showDict = function(item) {
         const box = document.getElementById('dictBox');
-        document.getElementById('dictTitle').innerText = item + " についての事実";
+        document.getElementById('dictTitle').innerText = item + " について";
         document.getElementById('dictContent').innerText = dicts[petType][item] || "詳細な解説を準備中です。";
         box.style.display = 'block';
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
@@ -115,7 +175,6 @@
 
     window.closeDict = function() { document.getElementById('dictBox').style.display = 'none'; };
 
-    // ===== OCR: Netlify Function経由 =====
     let selectedFiles = [];
 
     function addFiles(files) {
@@ -140,7 +199,6 @@
 
         try {
             let found = 0;
-
             for (const file of selectedFiles) {
                 const base64 = await new Promise(resolve => {
                     const reader = new FileReader();
@@ -162,9 +220,7 @@
                     }
                 }
             }
-
             statusEl.innerText = `✅ 解析完了！ ${found}項目を自動入力しました。残りは手動で入力してください。`;
-
         } catch(e) {
             console.error(e);
             statusEl.innerText = '❌ 読み取りに失敗しました。もう一度試してください。';
@@ -172,19 +228,20 @@
         document.getElementById('ocrBtn').disabled = false;
     };
 
-    // 保存機能
     window.saveTest = async function() {
         const testDate = document.getElementById('testDate').value;
         if (!testDate) return alert("検査日を選択してください");
 
         const data = { testDate, petType, timestamp: new Date() };
-        ['RBC','HCT','HGB','RET','NRBC','WBC','NEU','LYM','MON','EOS','BAS','PLT','MPV','PCT'].forEach(id => {
+        ['RBC','HCT','HGB','MCV','MCH','MCHC','RDW','PRET','RET','RETICHGB',
+         'WBC','NEU','LYM','MON','EOS','BAS','NEUN','LYMN','MONN','EOSN','BASN',
+         'PLT','MPV','PCT'].forEach(id => {
             data[id] = document.getElementById('val' + id).value;
         });
 
         try {
             await addDoc(collection(db, "blood_tests"), data);
-            alert("家族全員の記録として保存しました");
+            alert("記録を保存しました");
         } catch (e) {
             alert("保存に失敗しました");
         }
