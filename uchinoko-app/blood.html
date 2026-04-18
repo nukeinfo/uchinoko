@@ -11,6 +11,7 @@
         .container { max-width: 500px; margin: 0 auto; width: 100%; }
         h1 { font-size: 18px; border-bottom: 2px solid #000; padding-bottom: 10px; }
         .back-btn { display: inline-block; margin: 10px 0; text-decoration: none; color: #000; font-weight: bold; }
+        .pet-badge { display: inline-block; background: #adff2f; border: 1px solid #556b2f; border-radius: 10px; font-size: 12px; padding: 2px 8px; margin-bottom: 12px; font-weight: bold; }
         .ocr-box { background: #e0f7fa; border: 2px dashed #00796b; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; width: 100%; }
         #status { font-size: 12px; color: #00796b; margin-top: 8px; font-weight: bold; }
         .test-group { background: #fff; border: 2px solid #000; padding: 15px; border-radius: 10px; margin-bottom: 20px; width: 100%; }
@@ -26,7 +27,11 @@
 <body>
 <div class="container">
     <a href="index.html" class="back-btn">← 戻る</a>
-    <h1 id="page-title" style="display:flex; justify-content:space-between; align-items:center;"><span id="title-text">血液検査記録</span><a href="blood_history.html" style="font-size:13px; font-weight:bold; background:#adff2f; border:2px solid #000; border-radius:8px; padding:6px 12px; text-decoration:none; color:#000; box-shadow:2px 2px 0px #000; white-space:nowrap; flex-shrink:0;">📋 検査結果</a></h1>
+    <div id="petBadge" class="pet-badge"></div>
+    <h1 id="page-title" style="display:flex; justify-content:space-between; align-items:center;">
+        <span id="title-text">血液検査記録</span>
+        <a href="blood_history.html" style="font-size:13px; font-weight:bold; background:#adff2f; border:2px solid #000; border-radius:8px; padding:6px 12px; text-decoration:none; color:#000; box-shadow:2px 2px 0px #000; white-space:nowrap; flex-shrink:0;">📋 検査結果</a>
+    </h1>
 
     <div class="ocr-box">
         <label style="font-weight:bold;">📋 検査用紙を読み取って一括入力</label>
@@ -106,62 +111,74 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const petType = localStorage.getItem('selected_pet_type') || 'cat';
+    // ペット情報取得
+    function getSelectedPet() {
+        try {
+            const pets = JSON.parse(localStorage.getItem('uchinoko_pets')) || [];
+            const selectedId = localStorage.getItem('uchinoko_selected_pet');
+            return pets.find(p => p.id === selectedId) || null;
+        } catch { return null; }
+    }
+
+    const pet = getSelectedPet();
+    const petType = pet ? pet.type : (localStorage.getItem('selected_pet_type') || 'cat');
     const icon = petType === 'dog' ? '🐶' : '🐱';
+
+    document.getElementById('petBadge').innerText = pet ? `${icon} ${pet.name}` : `${icon}`;
     document.getElementById('title-text').innerText = icon + " 血液詳細記録 (IDEXX)";
 
     const dicts = {
         dog: {
-            'RBC':      '【赤血球数】酸素を全身に運ぶ細胞の数です。貧血や脱水などで増減します。',
-            'HCT':      '【ヘマトクリット】血液全体に占める赤血球の割合です。貧血の基本的な指標です。',
-            'HGB':      '【ヘモグロビン濃度】赤血球の中にある酸素を運ぶタンパク質の量です。',
-            'MCV':      '【平均赤血球容積】赤血球1個の平均的な大きさです。貧血の種類を調べる手がかりになります。',
-            'MCH':      '【平均赤血球ヘモグロビン量】赤血球1個に含まれるヘモグロビンの平均量です。',
-            'MCHC':     '【平均赤血球ヘモグロビン濃度】赤血球の中のヘモグロビンの濃さです。貧血の性質を知る指標です。',
-            'RDW':      '【赤血球分布幅】赤血球の大きさのばらつきを示します。数値が高いと様々な大きさの赤血球が混在しています。',
-            'PRET':     '【%網状赤血球】全赤血球に占める若い赤血球の割合です。骨髄が活発に血を作っているかの目安になります。',
-            'RET':      '【網状赤血球数】骨髄で作られたばかりの若い赤血球の数です。貧血への骨髄の反応を見ます。',
-            'RETICHGB': '【網状赤血球ヘモグロビン】若い赤血球に含まれるヘモグロビン量です。鉄の利用状態を反映します。',
-            'WBC':      '【白血球数】免疫を担う細胞の総数です。感染や炎症、ストレスなどで変動します。',
-            'NEU':      '【好中球%】白血球全体に占める好中球の割合です。急性炎症や細菌感染で増加します。',
-            'LYM':      '【リンパ球%】白血球全体に占めるリンパ球の割合です。ウイルス感染や免疫に関連します。',
-            'MON':      '【単球%】白血球全体に占める単球の割合です。慢性炎症や組織の損傷で増加します。',
-            'EOS':      '【好酸球%】白血球全体に占める好酸球の割合です。寄生虫やアレルギーで増加します。',
-            'BAS':      '【好塩基球%】白血球全体に占める好塩基球の割合です。非常に珍しい項目で重度のアレルギー等に関連します。',
-            'NEUN':     '【好中球数】血液中の好中球の実数です。急性炎症や細菌感染への反応を示します。',
-            'LYMN':     '【リンパ球数】血液中のリンパ球の実数です。免疫状態を知る指標です。',
-            'MONN':     '【単球数】血液中の単球の実数です。慢性炎症などで変動します。',
-            'EOSN':     '【好酸球数】血液中の好酸球の実数です。アレルギーや寄生虫の影響を反映します。',
-            'BASN':     '【好塩基球数】血液中の好塩基球の実数です。通常は非常に少ない細胞です。',
-            'PLT':      '【血小板】止血に関わる細胞の数です。少ないと出血が止まりにくくなります。',
-            'MPV':      '【平均血小板容積】血小板1個の平均的な大きさです。若い血小板が多いと大きくなります。',
-            'PCT':      '【血小板クリット】血液全体に占める血小板の割合です。'
+            'RBC':'【赤血球数】酸素を全身に運ぶ細胞の数です。貧血や脱水などで増減します。',
+            'HCT':'【ヘマトクリット】血液全体に占める赤血球の割合です。貧血の基本的な指標です。',
+            'HGB':'【ヘモグロビン濃度】赤血球の中にある酸素を運ぶタンパク質の量です。',
+            'MCV':'【平均赤血球容積】赤血球1個の平均的な大きさです。貧血の種類を調べる手がかりになります。',
+            'MCH':'【平均赤血球ヘモグロビン量】赤血球1個に含まれるヘモグロビンの平均量です。',
+            'MCHC':'【平均赤血球ヘモグロビン濃度】赤血球の中のヘモグロビンの濃さです。貧血の性質を知る指標です。',
+            'RDW':'【赤血球分布幅】赤血球の大きさのばらつきを示します。',
+            'PRET':'【%網状赤血球】全赤血球に占める若い赤血球の割合です。',
+            'RET':'【網状赤血球数】骨髄で作られたばかりの若い赤血球の数です。',
+            'RETICHGB':'【網状赤血球ヘモグロビン】若い赤血球に含まれるヘモグロビン量です。',
+            'WBC':'【白血球数】免疫を担う細胞の総数です。感染や炎症、ストレスなどで変動します。',
+            'NEU':'【好中球%】急性炎症や細菌感染で増加します。',
+            'LYM':'【リンパ球%】ウイルス感染や免疫に関連します。',
+            'MON':'【単球%】慢性炎症や組織の損傷で増加します。',
+            'EOS':'【好酸球%】寄生虫やアレルギーで増加します。',
+            'BAS':'【好塩基球%】重度のアレルギー等に関連します。',
+            'NEUN':'【好中球数】急性炎症や細菌感染への反応を示します。',
+            'LYMN':'【リンパ球数】免疫状態を知る指標です。',
+            'MONN':'【単球数】慢性炎症などで変動します。',
+            'EOSN':'【好酸球数】アレルギーや寄生虫の影響を反映します。',
+            'BASN':'【好塩基球数】通常は非常に少ない細胞です。',
+            'PLT':'【血小板】止血に関わる細胞の数です。少ないと出血が止まりにくくなります。',
+            'MPV':'【平均血小板容積】血小板1個の平均的な大きさです。',
+            'PCT':'【血小板クリット】血液全体に占める血小板の割合です。'
         },
         cat: {
-            'RBC':      '【赤血球数】酸素を全身に運ぶ細胞の数です。腎不全などで減少して貧血になることがあります。',
-            'HCT':      '【ヘマトクリット】血液全体に占める赤血球の割合です。猫の貧血を評価する最も基本的な指標です。',
-            'HGB':      '【ヘモグロビン濃度】赤血球内の酸素運搬色素の量です。貧血の程度を評価します。',
-            'MCV':      '【平均赤血球容積】赤血球1個の平均的な大きさです。貧血の種類を分類する手がかりになります。',
-            'MCH':      '【平均赤血球ヘモグロビン量】赤血球1個に含まれるヘモグロビンの平均量です。',
-            'MCHC':     '【平均赤血球ヘモグロビン濃度】赤血球の中のヘモグロビンの濃さです。貧血の性質を知る指標です。',
-            'RDW':      '【赤血球分布幅】赤血球の大きさのばらつきを示します。数値が高いと様々な大きさの赤血球が混在しています。',
-            'PRET':     '【%網状赤血球】全赤血球に占める若い赤血球の割合です。骨髄が活発に血を作っているかの目安になります。',
-            'RET':      '【網状赤血球数】骨髄で作られたばかりの若い赤血球の数です。猫は貧血への反応が遅めです。',
-            'RETICHGB': '【網状赤血球ヘモグロビン】若い赤血球に含まれるヘモグロビン量です。鉄の利用状態を反映します。',
-            'WBC':      '【白血球数】免疫を担う細胞の総数です。猫は病院でのストレスや恐怖でも急増しやすい特徴があります。',
-            'NEU':      '【好中球%】白血球全体に占める好中球の割合です。急性炎症や感染症、ストレスで増加します。',
-            'LYM':      '【リンパ球%】白血球全体に占めるリンパ球の割合です。ウイルス疾患や慢性炎症で変動します。',
-            'MON':      '【単球%】白血球全体に占める単球の割合です。慢性炎症や重篤な疾患で見られることがあります。',
-            'EOS':      '【好酸球%】白血球全体に占める好酸球の割合です。アレルギーや寄生虫のほか猫特有の肉芽腫疾患でも上昇します。',
-            'BAS':      '【好塩基球%】白血球全体に占める好塩基球の割合です。心糸状虫症やノミアレルギーなどに関連することがあります。',
-            'NEUN':     '【好中球数】血液中の好中球の実数です。急性炎症や細菌感染への反応を示します。',
-            'LYMN':     '【リンパ球数】血液中のリンパ球の実数です。免疫状態を知る指標です。',
-            'MONN':     '【単球数】血液中の単球の実数です。慢性炎症などで変動します。',
-            'EOSN':     '【好酸球数】血液中の好酸球の実数です。アレルギーや寄生虫の影響を反映します。',
-            'BASN':     '【好塩基球数】血液中の好塩基球の実数です。通常は非常に少ない細胞です。',
-            'PLT':      '【血小板】止血に関わる細胞の数です。猫は採血時のストレスで固まりやすく低く出やすい傾向があります。',
-            'MPV':      '【平均血小板容積】血小板1個の平均的な大きさです。猫では若い血小板が大きくなるため再生性の指標になります。',
-            'PCT':      '【血小板クリット】血液全体に占める血小板の割合です。猫では評価に有用です。'
+            'RBC':'【赤血球数】酸素を全身に運ぶ細胞の数です。腎不全などで減少して貧血になることがあります。',
+            'HCT':'【ヘマトクリット】猫の貧血を評価する最も基本的な指標です。',
+            'HGB':'【ヘモグロビン濃度】赤血球内の酸素運搬色素の量です。貧血の程度を評価します。',
+            'MCV':'【平均赤血球容積】赤血球1個の平均的な大きさです。',
+            'MCH':'【平均赤血球ヘモグロビン量】赤血球1個に含まれるヘモグロビンの平均量です。',
+            'MCHC':'【平均赤血球ヘモグロビン濃度】貧血の性質を知る指標です。',
+            'RDW':'【赤血球分布幅】赤血球の大きさのばらつきを示します。',
+            'PRET':'【%網状赤血球】骨髄が活発に血を作っているかの目安になります。',
+            'RET':'【網状赤血球数】猫は貧血への反応が遅めです。',
+            'RETICHGB':'【網状赤血球ヘモグロビン】鉄の利用状態を反映します。',
+            'WBC':'【白血球数】猫は病院でのストレスや恐怖でも急増しやすい特徴があります。',
+            'NEU':'【好中球%】急性炎症や感染症、ストレスで増加します。',
+            'LYM':'【リンパ球%】ウイルス疾患や慢性炎症で変動します。',
+            'MON':'【単球%】慢性炎症や重篤な疾患で見られることがあります。',
+            'EOS':'【好酸球%】アレルギーや寄生虫のほか猫特有の肉芽腫疾患でも上昇します。',
+            'BAS':'【好塩基球%】心糸状虫症やノミアレルギーなどに関連することがあります。',
+            'NEUN':'【好中球数】急性炎症や細菌感染への反応を示します。',
+            'LYMN':'【リンパ球数】免疫状態を知る指標です。',
+            'MONN':'【単球数】慢性炎症などで変動します。',
+            'EOSN':'【好酸球数】アレルギーや寄生虫の影響を反映します。',
+            'BASN':'【好塩基球数】通常は非常に少ない細胞です。',
+            'PLT':'【血小板】猫は採血時のストレスで固まりやすく低く出やすい傾向があります。',
+            'MPV':'【平均血小板容積】猫では若い血小板が大きくなるため再生性の指標になります。',
+            'PCT':'【血小板クリット】猫では評価に有用です。'
         }
     };
 
@@ -231,8 +248,16 @@
     window.saveTest = async function() {
         const testDate = document.getElementById('testDate').value;
         if (!testDate) return alert("検査日を選択してください");
+        if (!pet) return alert("ペットを選択してください");
 
-        const data = { testDate, petType, timestamp: new Date() };
+        const data = {
+            testDate,
+            petType,
+            petId: pet.id,       // ← 追加
+            petName: pet.name,   // ← 追加
+            timestamp: new Date()
+        };
+
         ['RBC','HCT','HGB','MCV','MCH','MCHC','RDW','PRET','RET','RETICHGB',
          'WBC','NEU','LYM','MON','EOS','BAS','NEUN','LYMN','MONN','EOSN','BASN',
          'PLT','MPV','PCT'].forEach(id => {
@@ -242,7 +267,7 @@
         try {
             await addDoc(collection(db, "blood_tests"), data);
             alert("記録を保存しました");
-        } catch (e) {
+        } catch(e) {
             alert("保存に失敗しました");
         }
     };
