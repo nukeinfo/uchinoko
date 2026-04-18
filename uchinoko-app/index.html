@@ -5,44 +5,155 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>うちの子</title>
     <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
     <style>
         body { background-color: #f5f5dc; font-family: 'Hiragino Maru Gothic ProN', sans-serif; padding: 20px; color: #333; text-align: center; }
         h1 { font-size: 28px; margin-top: 30px; color: #556b2f; text-shadow: 1px 1px 2px #fff; }
-        .subtitle { font-size: 14px; margin-bottom: 30px; color: #666; }
-        .pet-selector { display: flex; justify-content: center; gap: 15px; margin-bottom: 35px; }
-        .pet-option { background: #fff; border: 2px solid #556b2f; padding: 10px 25px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 16px; box-shadow: 0 3px 0 #ccd4bb; transition: 0.2s; opacity: 0.6; }
-        .pet-option.active { background-color: #fff; opacity: 1; border: 3px solid #556b2f; transform: translateY(2px); box-shadow: 0 1px 0 #ccd4bb; }
+        .subtitle { font-size: 14px; margin-bottom: 20px; color: #666; }
+        .pet-selector { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 25px; }
+        .pet-option { background: #fff; border: 2px solid #556b2f; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 15px; box-shadow: 0 3px 0 #ccd4bb; transition: 0.2s; opacity: 0.6; }
+        .pet-option.active { opacity: 1; border: 3px solid #556b2f; transform: translateY(2px); box-shadow: 0 1px 0 #ccd4bb; }
+        .add-pet-area { margin-bottom: 25px; }
+        .add-pet-row { display: flex; gap: 8px; max-width: 400px; margin: 0 auto 8px; }
+        .add-pet-row input { flex: 1; padding: 10px; border: 2px solid #556b2f; border-radius: 10px; font-size: 15px; }
+        .add-pet-row select { padding: 10px; border: 2px solid #556b2f; border-radius: 10px; font-size: 15px; background: #fff; }
+        .add-btn { background: #adff2f; border: 2px solid #556b2f; border-radius: 10px; padding: 10px 15px; font-weight: bold; font-size: 15px; cursor: pointer; box-shadow: 0 2px 0 #ccd4bb; }
+        .del-pet-btn { background: #fff; border: 1px solid #ccc; border-radius: 8px; font-size: 11px; padding: 2px 6px; cursor: pointer; color: #999; margin-left: 4px; vertical-align: middle; }
         .menu-container { display: grid; grid-template-columns: 1fr; gap: 15px; max-width: 400px; margin: auto; }
         .menu-item { background: #fff; border: 2px solid #556b2f; border-radius: 15px; padding: 20px; text-decoration: none; color: #000; font-weight: bold; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 0 #ccd4bb; transition: 0.2s; }
         .menu-item:active { transform: translateY(4px); box-shadow: none; }
         .icon { font-size: 24px; margin-right: 10px; }
         .footer-deco { margin-top: 40px; font-size: 20px; color: #bc8f8f; opacity: 0.6; }
+        .no-pet-msg { color: #888; font-size: 14px; margin: 20px 0; }
+        .section-label { font-size: 12px; color: #888; margin-bottom: 6px; }
     </style>
 </head>
 <body>
     <h1>🐾 うちの子</h1>
     <p class="subtitle">だいじな家族の、毎日のきろく</p>
-    <div class="pet-selector">
-        <div id="dogOpt" class="pet-option" onclick="selectPet('dog')">いぬ 🐶</div>
-        <div id="catOpt" class="pet-option" onclick="selectPet('cat')">ねこ 🐱</div>
+
+    <div class="section-label">ペットを選んでください</div>
+    <div class="pet-selector" id="petSelector"></div>
+
+    <div class="add-pet-area">
+        <div class="section-label">ペットを追加する</div>
+        <div class="add-pet-row">
+            <input type="text" id="newPetName" placeholder="名前（例：ポチ）" maxlength="10">
+            <select id="newPetType">
+                <option value="dog">🐶 いぬ</option>
+                <option value="cat">🐱 ねこ</option>
+            </select>
+            <button class="add-btn" onclick="addPet()">追加</button>
+        </div>
     </div>
-    <div class="menu-container">
-        <a href="diary.html" class="menu-item"><span class="icon">📖</span> 日記をつける</a>
-        <a href="symptoms.html" class="menu-item"><span class="icon">🔍</span> 症状をふりかえる</a>
-        <a href="album.html" class="menu-item"><span class="icon">📸</span> 写真動画アルバム</a>
-        <a href="blood.html" class="menu-item"><span class="icon">🏥</span> 血液検査の結果をみる</a>
+
+    <div id="menuArea">
+        <p class="no-pet-msg">ペットを追加または選択してください</p>
     </div>
+
     <div class="footer-deco">🐾 🐾 🐾</div>
+
     <script>
-        const PET_KEY = 'selected_pet_type';
-        function selectPet(type) { localStorage.setItem(PET_KEY, type); updatePetUI(); }
-        function updatePetUI() {
-            const pet = localStorage.getItem(PET_KEY) || 'dog';
-            document.getElementById('dogOpt').classList.toggle('active', pet === 'dog');
-            document.getElementById('catOpt').classList.toggle('active', pet === 'cat');
+        const PETS_KEY = 'uchinoko_pets';
+        const SELECTED_KEY = 'uchinoko_selected_pet';
+
+        function getPets() {
+            try { return JSON.parse(localStorage.getItem(PETS_KEY)) || []; }
+            catch { return []; }
         }
-        window.onload = updatePetUI;
+
+        function savePets(pets) {
+            localStorage.setItem(PETS_KEY, JSON.stringify(pets));
+        }
+
+        function getSelectedPetId() {
+            return localStorage.getItem(SELECTED_KEY) || null;
+        }
+
+        function setSelectedPetId(id) {
+            localStorage.setItem(SELECTED_KEY, id);
+        }
+
+        function addPet() {
+            const name = document.getElementById('newPetName').value.trim();
+            const type = document.getElementById('newPetType').value;
+            if (!name) return alert('名前を入力してください');
+            const pets = getPets();
+            if (pets.length >= 3) return alert('登録できるペットは3匹までです');
+            if (pets.find(p => p.name === name)) return alert('同じ名前のペットが既にいます');
+            const id = 'pet_' + Date.now();
+            pets.push({ id, name, type });
+            savePets(pets);
+            document.getElementById('newPetName').value = '';
+            setSelectedPetId(id);
+            renderAll();
+        }
+
+        function deletePet(id) {
+            const pets = getPets();
+            const pet = pets.find(p => p.id === id);
+            if (!pet) return;
+            if (!confirm(`「${pet.name}」を削除しますか？\n※記録データは残ります`)) return;
+            const newPets = pets.filter(p => p.id !== id);
+            savePets(newPets);
+            if (getSelectedPetId() === id) {
+                setSelectedPetId(newPets.length > 0 ? newPets[0].id : null);
+            }
+            renderAll();
+        }
+
+        function selectPet(id) {
+            setSelectedPetId(id);
+            renderAll();
+        }
+
+        function renderAll() {
+            const pets = getPets();
+            const selectedId = getSelectedPetId();
+            const selector = document.getElementById('petSelector');
+            selector.innerHTML = '';
+
+            pets.forEach(pet => {
+                const icon = pet.type === 'dog' ? '🐶' : '🐱';
+                const div = document.createElement('div');
+                div.className = 'pet-option' + (pet.id === selectedId ? ' active' : '');
+                div.innerHTML = `${icon} ${pet.name}<button class="del-pet-btn" onclick="event.stopPropagation(); deletePet('${pet.id}')">×</button>`;
+                div.onclick = () => selectPet(pet.id);
+                selector.appendChild(div);
+            });
+
+            const menuArea = document.getElementById('menuArea');
+            const selectedPet = pets.find(p => p.id === selectedId);
+
+            if (!selectedPet) {
+                menuArea.innerHTML = '<p class="no-pet-msg">ペットを追加または選択してください</p>';
+                return;
+            }
+
+            menuArea.innerHTML = `
+                <div class="menu-container">
+                    <a href="diary.html" class="menu-item"><span class="icon">📖</span> 日記をつける</a>
+                    <a href="symptoms.html" class="menu-item"><span class="icon">🔍</span> 症状をふりかえる</a>
+                    <a href="album.html" class="menu-item"><span class="icon">📸</span> 写真動画アルバム</a>
+                    <a href="blood.html" class="menu-item"><span class="icon">🏥</span> 血液検査の結果をみる</a>
+                </div>`;
+        }
+
+        // 既存データ移行：古いdog/cat形式から新形式へ
+        function migrateOldData() {
+            const oldKey = 'selected_pet_type';
+            const oldType = localStorage.getItem(oldKey);
+            if (!oldType) return;
+            const pets = getPets();
+            if (pets.length > 0) return; // 既に移行済み
+            const name = oldType === 'dog' ? 'わんこ' : 'にゃんこ';
+            const id = 'pet_' + Date.now();
+            savePets([{ id, name, type: oldType }]);
+            setSelectedPetId(id);
+        }
+
+        migrateOldData();
+        renderAll();
     </script>
 </body>
 </html>
