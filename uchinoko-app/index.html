@@ -10,6 +10,9 @@
         body { background-color: #f5f5dc; font-family: 'Hiragino Maru Gothic ProN', sans-serif; padding: 20px; color: #333; text-align: center; }
         h1 { font-size: 28px; margin-top: 30px; color: #556b2f; text-shadow: 1px 1px 2px #fff; }
         .subtitle { font-size: 14px; margin-bottom: 20px; color: #666; }
+        .lang-selector { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; }
+        .lang-btn { background: #fff; border: 2px solid #556b2f; border-radius: 15px; padding: 5px 12px; font-size: 13px; cursor: pointer; opacity: 0.6; font-weight: bold; }
+        .lang-btn.active { opacity: 1; background: #adff2f; }
         .pet-selector { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 25px; }
         .pet-option { background: #fff; border: 2px solid #556b2f; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 15px; box-shadow: 0 3px 0 #ccd4bb; transition: 0.2s; opacity: 0.6; }
         .pet-option.active { opacity: 1; border: 3px solid #556b2f; transform: translateY(2px); box-shadow: 0 1px 0 #ccd4bb; }
@@ -29,26 +32,32 @@
     </style>
 </head>
 <body>
-    <h1>🐾 うちの子</h1>
-    <p class="subtitle">だいじな家族の、毎日のきろく</p>
+    <div class="lang-selector">
+        <button class="lang-btn" onclick="setLang('ja')">🇯🇵 日本語</button>
+        <button class="lang-btn" onclick="setLang('en')">🇺🇸 English</button>
+        <button class="lang-btn" onclick="setLang('es')">🇪🇸 Español</button>
+    </div>
 
-    <div class="section-label">ペットを選んでください</div>
+    <h1>🐾 <span id="t-title"></span></h1>
+    <p class="subtitle" id="t-subtitle"></p>
+
+    <div class="section-label" id="t-select-label"></div>
     <div class="pet-selector" id="petSelector"></div>
 
     <div class="add-pet-area">
-        <div class="section-label">ペットを追加する</div>
+        <div class="section-label" id="t-add-label"></div>
         <div class="add-pet-row">
-            <input type="text" id="newPetName" placeholder="名前（例：ポチ）" maxlength="10">
+            <input type="text" id="newPetName" maxlength="10">
             <select id="newPetType">
-                <option value="dog">🐶 いぬ</option>
-                <option value="cat">🐱 ねこ</option>
+                <option value="dog">🐶</option>
+                <option value="cat">🐱</option>
             </select>
-            <button class="add-btn" onclick="addPet()">追加</button>
+            <button class="add-btn" onclick="addPet()" id="t-add-btn"></button>
         </div>
     </div>
 
     <div id="menuArea">
-        <p class="no-pet-msg">ペットを追加または選択してください</p>
+        <p class="no-pet-msg" id="t-no-pet"></p>
     </div>
 
     <div class="footer-deco">🐾 🐾 🐾</div>
@@ -56,6 +65,101 @@
     <script>
         const PETS_KEY = 'uchinoko_pets';
         const SELECTED_KEY = 'uchinoko_selected_pet';
+        const LANG_KEY = 'uchinoko_lang';
+
+        // 翻訳テキスト
+        const i18n = {
+            ja: {
+                title: 'うちの子',
+                subtitle: 'だいじな家族の、毎日のきろく',
+                selectLabel: 'ペットを選んでください',
+                addLabel: 'ペットを追加する',
+                addBtn: '追加',
+                noPet: 'ペットを追加または選択してください',
+                namePlaceholder: '名前（例：ポチ）',
+                maxPets: '登録できるペットは3匹までです',
+                sameName: '同じ名前のペットが既にいます',
+                nameRequired: '名前を入力してください',
+                deleteConfirm: (name) => `「${name}」を削除しますか？\n※記録データは残ります`,
+                menu: {
+                    diary: '日記をつける',
+                    symptoms: '症状をふりかえる',
+                    album: '写真動画アルバム',
+                    blood: '血液検査の結果をみる'
+                }
+            },
+            en: {
+                title: 'My Pet',
+                subtitle: 'Daily records for your beloved family',
+                selectLabel: 'Select your pet',
+                addLabel: 'Add a pet',
+                addBtn: 'Add',
+                noPet: 'Please add or select a pet',
+                namePlaceholder: 'Name (e.g. Bella)',
+                maxPets: 'You can register up to 3 pets',
+                sameName: 'A pet with the same name already exists',
+                nameRequired: 'Please enter a name',
+                deleteConfirm: (name) => `Delete "${name}"?\n※Your records will be kept`,
+                menu: {
+                    diary: 'Write a diary',
+                    symptoms: 'Review symptoms',
+                    album: 'Photo & Video album',
+                    blood: 'Blood test results'
+                }
+            },
+            es: {
+                title: 'Mi Mascota',
+                subtitle: 'Registros diarios de tu familia querida',
+                selectLabel: 'Selecciona tu mascota',
+                addLabel: 'Agregar mascota',
+                addBtn: 'Agregar',
+                noPet: 'Por favor agrega o selecciona una mascota',
+                namePlaceholder: 'Nombre (ej: Luna)',
+                maxPets: 'Puedes registrar hasta 3 mascotas',
+                sameName: 'Ya existe una mascota con el mismo nombre',
+                nameRequired: 'Por favor ingresa un nombre',
+                deleteConfirm: (name) => `¿Eliminar "${name}"?\n※Los registros se conservarán`,
+                menu: {
+                    diary: 'Escribir diario',
+                    symptoms: 'Revisar síntomas',
+                    album: 'Álbum de fotos y videos',
+                    blood: 'Resultados de análisis de sangre'
+                }
+            }
+        };
+
+        function getLang() {
+            return localStorage.getItem(LANG_KEY) || 'ja';
+        }
+
+        function setLang(lang) {
+            localStorage.setItem(LANG_KEY, lang);
+            applyLang();
+            renderAll();
+        }
+
+        function applyLang() {
+            const lang = getLang();
+            const t = i18n[lang];
+
+            // ボタンのアクティブ状態
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            const idx = { ja: 0, en: 1, es: 2 }[lang];
+            document.querySelectorAll('.lang-btn')[idx].classList.add('active');
+
+            // テキスト更新
+            document.getElementById('t-title').innerText = t.title;
+            document.getElementById('t-subtitle').innerText = t.subtitle;
+            document.getElementById('t-select-label').innerText = t.selectLabel;
+            document.getElementById('t-add-label').innerText = t.addLabel;
+            document.getElementById('t-add-btn').innerText = t.addBtn;
+            document.getElementById('t-no-pet').innerText = t.noPet;
+            document.getElementById('newPetName').placeholder = t.namePlaceholder;
+
+            // html lang属性
+            const htmlLang = { ja: 'ja', en: 'en', es: 'es' }[lang];
+            document.documentElement.lang = htmlLang;
+        }
 
         function getPets() {
             try { return JSON.parse(localStorage.getItem(PETS_KEY)) || []; }
@@ -75,12 +179,14 @@
         }
 
         function addPet() {
+            const lang = getLang();
+            const t = i18n[lang];
             const name = document.getElementById('newPetName').value.trim();
             const type = document.getElementById('newPetType').value;
-            if (!name) return alert('名前を入力してください');
+            if (!name) return alert(t.nameRequired);
             const pets = getPets();
-            if (pets.length >= 3) return alert('登録できるペットは3匹までです');
-            if (pets.find(p => p.name === name)) return alert('同じ名前のペットが既にいます');
+            if (pets.length >= 3) return alert(t.maxPets);
+            if (pets.find(p => p.name === name)) return alert(t.sameName);
             const id = 'pet_' + Date.now();
             pets.push({ id, name, type });
             savePets(pets);
@@ -90,10 +196,12 @@
         }
 
         function deletePet(id) {
+            const lang = getLang();
+            const t = i18n[lang];
             const pets = getPets();
             const pet = pets.find(p => p.id === id);
             if (!pet) return;
-            if (!confirm(`「${pet.name}」を削除しますか？\n※記録データは残ります`)) return;
+            if (!confirm(t.deleteConfirm(pet.name))) return;
             const newPets = pets.filter(p => p.id !== id);
             savePets(newPets);
             if (getSelectedPetId() === id) {
@@ -108,6 +216,8 @@
         }
 
         function renderAll() {
+            const lang = getLang();
+            const t = i18n[lang];
             const pets = getPets();
             const selectedId = getSelectedPetId();
             const selector = document.getElementById('petSelector');
@@ -126,26 +236,26 @@
             const selectedPet = pets.find(p => p.id === selectedId);
 
             if (!selectedPet) {
-                menuArea.innerHTML = '<p class="no-pet-msg">ペットを追加または選択してください</p>';
+                menuArea.innerHTML = `<p class="no-pet-msg">${t.noPet}</p>`;
                 return;
             }
 
             menuArea.innerHTML = `
                 <div class="menu-container">
-                    <a href="diary.html" class="menu-item"><span class="icon">📖</span> 日記をつける</a>
-                    <a href="symptoms.html" class="menu-item"><span class="icon">🔍</span> 症状をふりかえる</a>
-                    <a href="album.html" class="menu-item"><span class="icon">📸</span> 写真動画アルバム</a>
-                    <a href="blood.html" class="menu-item"><span class="icon">🏥</span> 血液検査の結果をみる</a>
+                    <a href="diary.html" class="menu-item"><span class="icon">📖</span> ${t.menu.diary}</a>
+                    <a href="symptoms.html" class="menu-item"><span class="icon">🔍</span> ${t.menu.symptoms}</a>
+                    <a href="album.html" class="menu-item"><span class="icon">📸</span> ${t.menu.album}</a>
+                    <a href="blood.html" class="menu-item"><span class="icon">🏥</span> ${t.menu.blood}</a>
                 </div>`;
         }
 
-        // 既存データ移行：古いdog/cat形式から新形式へ
+        // 既存データ移行
         function migrateOldData() {
             const oldKey = 'selected_pet_type';
             const oldType = localStorage.getItem(oldKey);
             if (!oldType) return;
             const pets = getPets();
-            if (pets.length > 0) return; // 既に移行済み
+            if (pets.length > 0) return;
             const name = oldType === 'dog' ? 'わんこ' : 'にゃんこ';
             const id = 'pet_' + Date.now();
             savePets([{ id, name, type: oldType }]);
@@ -153,6 +263,7 @@
         }
 
         migrateOldData();
+        applyLang();
         renderAll();
     </script>
 </body>
