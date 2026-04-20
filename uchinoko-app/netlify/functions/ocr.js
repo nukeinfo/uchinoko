@@ -50,20 +50,49 @@ exports.handler = async (event) => {
             },
             {
               type: "text",
-              text: `この血液検査の用紙から以下の項目の数値を読み取ってください。黒字・赤字どちらも読み取ってください。
+              text: `この血液検査の用紙から数値を読み取ってください。
+日本語・英語・スペイン語どの用紙でも対応します。
+黒字・赤字・H・L マークがあっても数値のみ読み取ってください。
 必ずJSON形式のみで返してください。余分なテキストは不要です。
 
 {"RBC":"","HCT":"","HGB":"","MCV":"","MCH":"","MCHC":"","RDW":"","PRET":"","RET":"","RETICHGB":"","WBC":"","NEU":"","LYM":"","MON":"","EOS":"","BAS":"","NEUN":"","LYMN":"","MONN":"","EOSN":"","BASN":"","PLT":"","MPV":"","PCT":""}
 
-各キーの対応:
-RBC=赤血球数, HCT=ヘマトクリット, HGB=ヘモグロビン濃度,
-MCV=平均赤血球容積, MCH=平均赤血球ヘモグロビン量, MCHC=平均赤血球ヘモグロビン濃度,
-RDW=赤血球分布幅, PRET=%網状赤血球, RET=網状赤血球数, RETICHGB=網状赤血球ヘモグロビン(RETIC-HGB),
-WBC=白血球数, NEU=好中球%, LYM=リンパ球%, MON=単球%, EOS=好酸球%, BAS=好塩基球%,
-NEUN=好中球数, LYMN=リンパ球数, MONN=単球数, EOSN=好酸球数, BASN=好塩基球数,
-PLT=血小板, MPV=平均血小板容積, PCT=血小板クリット
+各キーと対応する項目名（日本語・英語・スペイン語）:
 
-数値が見つからない項目は空文字のままにしてください。`
+RBC = 赤血球数 / RBC / Glóbulos Rojos
+HCT = ヘマトクリット / Hematocrit / Hematocrito
+HGB = ヘモグロビン濃度 / Hemoglobin / Hemoglobina
+MCV = 平均赤血球容積 / MCV / Volumen Corpuscular Medio
+MCH = 平均赤血球ヘモグロビン量 / MCH / HCM
+MCHC = 平均赤血球ヘモグロビン濃度 / MCHC / CHCM
+RDW = 赤血球分布幅 / RDW / Amplitud de Distribución Eritrocitaria
+PRET = %網状赤血球 / % Reticulocyte / % Reticulocitos
+RET = 網状赤血球数 / Reticulocytes / Recuento de Reticulocitos
+RETICHGB = 網状赤血球ヘモグロビン / Reticulocyte Hemoglobin / Hemoglobina de Reticulocitos
+WBC = 白血球数 / WBC / Glóbulos Blancos
+NEU = 好中球% / % Neutrophils / Neutrófilos %
+LYM = リンパ球% / % Lymphocytes / Linfocitos %
+MON = 単球% / % Monocytes / Monocitos %
+EOS = 好酸球% / % Eosinophils / Eosinófilos %
+BAS = 好塩基球% / % Basophils / Basófilos %
+NEUN = 好中球数 / Neutrophils (absolute) / Recuento de Neutrófilos
+LYMN = リンパ球数 / Lymphocytes (absolute) / Recuento de Linfocitos
+MONN = 単球数 / Monocytes (absolute) / Recuento de Monocitos
+EOSN = 好酸球数 / Eosinophils (absolute) / Recuento de Eosinófilos
+BASN = 好塩基球数 / Basophils (absolute) / Recuento de Basófilos
+PLT = 血小板 / Platelets / Plaquetas
+MPV = 平均血小板容積 / MPV / Volumen Plaquetario Medio
+PCT = 血小板クリット / PCT / Plaquetocrito
+
+単位の変換ルール（重要）:
+- HCT: L/L表記（例 0.38）の場合は%に変換して入力（例 38.0）
+- HGB: g/L表記（例 134）の場合はg/dLに変換（例 13.4）
+- RBC: x10E12/L表記はそのまま入力
+- WBC・NEUN等: x10E9/L表記はそのまま入力
+- PLT: x10E9/L表記はそのまま入力
+
+数値が見つからない項目は空文字のままにしてください。
+JSONのみ返してください。`
             }
           ]
         }]
