@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>日記 - うちの子記録</title>
+    <title>うちの子 - 日記</title>
     <style>
         *, *::before, *::after { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; width: 100%; overflow-x: hidden; }
@@ -20,26 +20,25 @@
         .action-btns { text-align: right; margin-top: 10px; }
         .edit-btn, .del-btn { border: 1px solid #000; border-radius: 5px; padding: 8px 12px; font-size: 13px; cursor: pointer; margin-left: 10px; font-weight: bold; background: #fff; }
         .pet-badge { display: inline-block; background: #adff2f; border: 1px solid #556b2f; border-radius: 10px; font-size: 12px; padding: 2px 8px; margin-bottom: 8px; font-weight: bold; }
+        .back-btn { font-weight: bold; text-decoration: none; color: #000; }
     </style>
 </head>
 <body>
-    <a href="index.html" style="font-weight:bold; text-decoration:none; color:#000;">← 戻る</a>
-    <h1>日々の記録（日記）</h1>
-
+    <a href="index.html" class="back-btn" id="t-back"></a>
+    <h1 id="t-title"></h1>
     <div class="input-section">
         <div id="petBadge" class="pet-badge"></div>
-        <label>日時</label>
+        <label id="t-time-label"></label>
         <input type="datetime-local" id="logTime">
-        <label>できごと</label>
-        <textarea id="logText" placeholder="例：ごはんを完食した。"></textarea>
-        <button id="mainBtn" class="save-btn">記録を保存する</button>
+        <label id="t-event-label"></label>
+        <textarea id="logText"></textarea>
+        <button id="mainBtn" class="save-btn"></button>
     </div>
-
-    <div id="diaryList">読み込み中...</div>
+    <div id="diaryList">　</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, orderBy, where, onSnapshot, updateDoc, deleteDoc, doc, Timestamp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, updateDoc, deleteDoc, doc, Timestamp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAOevKlIPTEu1pgZhyf_a-I2US5KbZQi2c",
@@ -53,6 +52,76 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // 翻訳
+        const i18n = {
+            ja: {
+                back: '← 戻る',
+                title: '日々の記録（日記）',
+                timeLabel: '日時',
+                eventLabel: 'できごと',
+                placeholder: '例：ごはんを完食した。',
+                saveBtn: '記録を保存する',
+                updateBtn: '修正を反映する',
+                editBtn: '修正',
+                delBtn: '削除',
+                badge: (name) => `${name}の日記`,
+                noPet: '⚠️ ペットが選択されていません',
+                confirmDelete: '削除しますか？',
+                errorEmpty: '内容を入力してください',
+                errorNoPet: 'ペットを選択してください',
+                errorSave: 'エラーが発生しました',
+                empty: 'まだ記録がありません'
+            },
+            en: {
+                back: '← Back',
+                title: 'Daily Diary',
+                timeLabel: 'Date & Time',
+                eventLabel: 'What happened',
+                placeholder: 'e.g. Finished all the food today!',
+                saveBtn: 'Save record',
+                updateBtn: 'Update record',
+                editBtn: 'Edit',
+                delBtn: 'Delete',
+                badge: (name) => `${name}'s diary`,
+                noPet: '⚠️ No pet selected',
+                confirmDelete: 'Delete this record?',
+                errorEmpty: 'Please enter some content',
+                errorNoPet: 'Please select a pet',
+                errorSave: 'An error occurred',
+                empty: 'No records yet'
+            },
+            es: {
+                back: '← Volver',
+                title: 'Diario diario',
+                timeLabel: 'Fecha y hora',
+                eventLabel: '¿Qué pasó?',
+                placeholder: 'Ej: Comió todo su alimento hoy.',
+                saveBtn: 'Guardar registro',
+                updateBtn: 'Actualizar registro',
+                editBtn: 'Editar',
+                delBtn: 'Eliminar',
+                badge: (name) => `Diario de ${name}`,
+                noPet: '⚠️ No hay mascota seleccionada',
+                confirmDelete: '¿Eliminar este registro?',
+                errorEmpty: 'Por favor ingresa contenido',
+                errorNoPet: 'Por favor selecciona una mascota',
+                errorSave: 'Ocurrió un error',
+                empty: 'Aún no hay registros'
+            }
+        };
+
+        const lang = localStorage.getItem('uchinoko_lang') || 'ja';
+        const t = i18n[lang];
+
+        // テキスト適用
+        document.getElementById('t-back').innerText = t.back;
+        document.getElementById('t-title').innerText = t.title;
+        document.getElementById('t-time-label').innerText = t.timeLabel;
+        document.getElementById('t-event-label').innerText = t.eventLabel;
+        document.getElementById('logText').placeholder = t.placeholder;
+        document.getElementById('mainBtn').innerText = t.saveBtn;
+        document.documentElement.lang = lang;
+
         // ペット情報取得
         function getSelectedPet() {
             try {
@@ -64,10 +133,10 @@
 
         const pet = getSelectedPet();
         if (!pet) {
-            document.getElementById('petBadge').innerText = '⚠️ ペットが選択されていません';
+            document.getElementById('petBadge').innerText = t.noPet;
         } else {
             const icon = pet.type === 'dog' ? '🐶' : '🐱';
-            document.getElementById('petBadge').innerText = `${icon} ${pet.name}の日記`;
+            document.getElementById('petBadge').innerText = `${icon} ${t.badge(pet.name)}`;
         }
 
         const mainBtn = document.getElementById('mainBtn');
@@ -77,7 +146,7 @@
 
         function resetUI() {
             textInput.value = "";
-            mainBtn.innerText = "記録を保存する";
+            mainBtn.innerText = t.saveBtn;
             editId = null;
             const now = new Date();
             const jst = new Date(now.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }));
@@ -90,14 +159,14 @@
         }
 
         mainBtn.addEventListener('click', async () => {
-            if (!textInput.value) return alert("内容を入力してください");
-            if (!pet) return alert("ペットを選択してください");
+            if (!textInput.value) return alert(t.errorEmpty);
+            if (!pet) return alert(t.errorNoPet);
             try {
                 const data = {
                     time: timeInput.value,
                     text: textInput.value,
-                    petId: pet.id,        // ← 追加
-                    petName: pet.name     // ← 追加（検索用）
+                    petId: pet.id,
+                    petName: pet.name
                 };
                 if (editId) {
                     await updateDoc(doc(db, "pet_diary", editId), data);
@@ -105,27 +174,17 @@
                     await addDoc(collection(db, "pet_diary"), { ...data, timestamp: Timestamp.now() });
                 }
                 resetUI();
-            } catch (e) { alert("エラーが発生しました。"); }
+            } catch(e) { alert(t.errorSave); }
         });
 
-        // 選択中ペットの日記のみ表示
         function loadDiary() {
-            let q;
-            if (pet) {
-                // petIdが一致するものを取得（古いデータはpetIdなしなので別途表示）
-                q = query(collection(db, "pet_diary"), orderBy("time", "desc"));
-            } else {
-                q = query(collection(db, "pet_diary"), orderBy("time", "desc"));
-            }
-
+            const q = query(collection(db, "pet_diary"), orderBy("time", "desc"));
             onSnapshot(q, (snapshot) => {
                 const listDiv = document.getElementById('diaryList');
                 listDiv.innerHTML = "";
                 let count = 0;
-
                 snapshot.forEach((d) => {
                     const data = d.data();
-                    // petIdがある場合は一致するもののみ、ない場合は全て表示（旧データ互換）
                     if (data.petId && pet && data.petId !== pet.id) return;
                     count++;
                     const id = d.id;
@@ -136,24 +195,23 @@
                         <span class="log-date-line">${timeStr}</span>
                         <span class="log-content-line">${data.text || ""}</span>
                         <div class="action-btns">
-                            <button class="edit-btn">修正</button>
-                            <button class="del-btn">削除</button>
+                            <button class="edit-btn">${t.editBtn}</button>
+                            <button class="del-btn">${t.delBtn}</button>
                         </div>`;
                     item.querySelector('.edit-btn').onclick = () => {
                         timeInput.value = data.time || "";
                         textInput.value = data.text || "";
                         editId = id;
-                        mainBtn.innerText = "修正を反映する";
+                        mainBtn.innerText = t.updateBtn;
                         window.scrollTo(0, 0);
                     };
                     item.querySelector('.del-btn').onclick = async () => {
-                        if (confirm("削除しますか？")) await deleteDoc(doc(db, "pet_diary", id));
+                        if (confirm(t.confirmDelete)) await deleteDoc(doc(db, "pet_diary", id));
                     };
                     listDiv.appendChild(item);
                 });
-
                 if (count === 0) {
-                    listDiv.innerHTML = '<p style="text-align:center; color:#888;">まだ記録がありません</p>';
+                    listDiv.innerHTML = `<p style="text-align:center; color:#888;">${t.empty}</p>`;
                 }
             });
         }
