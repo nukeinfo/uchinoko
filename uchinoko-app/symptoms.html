@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>症状 - うちの子記録</title>
+    <title>うちの子 - 症状</title>
     <style>
         *, *::before, *::after { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; width: 100%; overflow-x: hidden; }
@@ -28,26 +28,26 @@
     </style>
 </head>
 <body>
-    <a href="index.html" class="back-btn">← 戻る</a>
-    <h1>症状別・事実の抽出</h1>
+    <a href="index.html" class="back-btn" id="t-back"></a>
+    <h1 id="t-title"></h1>
     <div id="petBadge" class="pet-badge"></div>
 
     <div class="setting-section">
-        <small>気になる症状ワードを5つまで設定してください</small>
+        <small id="t-hint"></small>
         <div id="wordInputs">
-            <input type="text" class="word-input" placeholder="例：下痢">
-            <input type="text" class="word-input" placeholder="例：口を気にする">
-            <input type="text" class="word-input" placeholder="例：食欲なし">
-            <input type="text" class="word-input" placeholder="例：嘔吐">
-            <input type="text" class="word-input" placeholder="例：元気なし">
+            <input type="text" class="word-input" id="placeholder1">
+            <input type="text" class="word-input" id="placeholder2">
+            <input type="text" class="word-input" id="placeholder3">
+            <input type="text" class="word-input" id="placeholder4">
+            <input type="text" class="word-input" id="placeholder5">
         </div>
-        <button class="save-words-btn" onclick="saveWords()">ワードを更新する</button>
+        <button class="save-words-btn" onclick="saveWords()" id="t-save-btn"></button>
     </div>
 
     <div id="filterButtons" class="filter-container"></div>
     <hr>
-    <h2 id="currentKeywordTitle">抽出結果</h2>
-    <div id="filteredList"><p class="empty-msg">上のボタンをタップすると日記から抽出します</p></div>
+    <h2 id="currentKeywordTitle"></h2>
+    <div id="filteredList"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
@@ -65,6 +65,77 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        const i18n = {
+            ja: {
+                back: '← 戻る',
+                title: '症状別・事実の抽出',
+                hint: '気になる症状ワードを5つまで設定してください',
+                saveBtn: 'ワードを更新する',
+                badge: (name) => `${name}の症状記録`,
+                noPet: '⚠️ ペットが選択されていません',
+                placeholders: ['例：下痢', '例：口を気にする', '例：食欲なし', '例：嘔吐', '例：元気なし'],
+                resultTitle: (word) => `「${word}」の記録`,
+                loading: '読み込み中...',
+                notFound: (word) => `「${word}」を含む記録は見つかりませんでした`,
+                setWord: 'ワードを設定してください',
+                tapHint: '上のボタンをタップすると日記から抽出します',
+                saved: 'ワードを更新しました',
+                saveError: '保存に失敗しました',
+                loadError: '読み込みに失敗しました'
+            },
+            en: {
+                back: '← Back',
+                title: 'Symptom Search',
+                hint: 'Set up to 5 symptom keywords to search',
+                saveBtn: 'Update keywords',
+                badge: (name) => `${name}'s symptoms`,
+                noPet: '⚠️ No pet selected',
+                placeholders: ['e.g. diarrhea', 'e.g. scratching', 'e.g. no appetite', 'e.g. vomiting', 'e.g. lethargic'],
+                resultTitle: (word) => `Records with "${word}"`,
+                loading: 'Loading...',
+                notFound: (word) => `No records found with "${word}"`,
+                setWord: 'Please set keywords first',
+                tapHint: 'Tap a button above to search diary',
+                saved: 'Keywords updated',
+                saveError: 'Failed to save',
+                loadError: 'Failed to load'
+            },
+            es: {
+                back: '← Volver',
+                title: 'Búsqueda de síntomas',
+                hint: 'Configura hasta 5 palabras clave de síntomas',
+                saveBtn: 'Actualizar palabras clave',
+                badge: (name) => `Síntomas de ${name}`,
+                noPet: '⚠️ No hay mascota seleccionada',
+                placeholders: ['Ej: diarrea', 'Ej: rascado', 'Ej: sin apetito', 'Ej: vómito', 'Ej: sin energía'],
+                resultTitle: (word) => `Registros con "${word}"`,
+                loading: 'Cargando...',
+                notFound: (word) => `No se encontraron registros con "${word}"`,
+                setWord: 'Por favor configura palabras clave',
+                tapHint: 'Toca un botón para buscar en el diario',
+                saved: 'Palabras clave actualizadas',
+                saveError: 'Error al guardar',
+                loadError: 'Error al cargar'
+            }
+        };
+
+        const lang = localStorage.getItem('uchinoko_lang') || 'ja';
+        const t = i18n[lang];
+
+        // テキスト適用
+        document.getElementById('t-back').innerText = t.back;
+        document.getElementById('t-title').innerText = t.title;
+        document.getElementById('t-hint').innerText = t.hint;
+        document.getElementById('t-save-btn').innerText = t.saveBtn;
+        document.getElementById('currentKeywordTitle').innerText = t.tapHint;
+        document.documentElement.lang = lang;
+
+        // プレースホルダー設定
+        t.placeholders.forEach((ph, i) => {
+            const el = document.getElementById(`placeholder${i + 1}`);
+            if (el) el.placeholder = ph;
+        });
+
         // ペット情報取得
         function getSelectedPet() {
             try {
@@ -77,13 +148,12 @@
         const pet = getSelectedPet();
         const petBadge = document.getElementById('petBadge');
         if (!pet) {
-            petBadge.innerText = '⚠️ ペットが選択されていません';
+            petBadge.innerText = t.noPet;
         } else {
             const icon = pet.type === 'dog' ? '🐶' : '🐱';
-            petBadge.innerText = `${icon} ${pet.name}の症状記録`;
+            petBadge.innerText = `${icon} ${t.badge(pet.name)}`;
         }
 
-        // ペットごとのワード保存キー
         const wordsDocId = pet ? `symptom_words_${pet.id}` : 'symptom_words';
 
         window.onload = function() { loadWords(); };
@@ -93,15 +163,14 @@
             const words = Array.from(inputs).map(i => i.value.trim()).filter(w => w !== "");
             try {
                 await setDoc(doc(db, "settings", wordsDocId), { words });
-                alert("ワードを更新しました");
+                alert(t.saved);
                 loadWords();
-            } catch(e) { alert("保存に失敗しました"); }
+            } catch(e) { alert(t.saveError); }
         };
 
         async function loadWords() {
             try {
                 const snap = await getDoc(doc(db, "settings", wordsDocId));
-                // 旧データ互換：ペット別がなければ共通ワードを読む
                 const words = snap.exists() ? snap.data().words :
                     (await getDoc(doc(db, "settings", "symptom_words"))).data()?.words || [];
 
@@ -111,7 +180,7 @@
                 const btnContainer = document.getElementById('filterButtons');
                 btnContainer.innerHTML = "";
                 if (words.length === 0) {
-                    btnContainer.innerHTML = "<p style='color:#666;'>ワードを設定してください</p>";
+                    btnContainer.innerHTML = `<p style='color:#666;'>${t.setWord}</p>`;
                     return;
                 }
                 words.forEach(word => {
@@ -127,9 +196,9 @@
         async function filterByWord(word, btn) {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            document.getElementById('currentKeywordTitle').textContent = `「${word}」の記録`;
+            document.getElementById('currentKeywordTitle').textContent = t.resultTitle(word);
             const listDiv = document.getElementById('filteredList');
-            listDiv.innerHTML = "<p class='loading-msg'>読み込み中...</p>";
+            listDiv.innerHTML = `<p class='loading-msg'>${t.loading}</p>`;
 
             try {
                 const q = query(collection(db, "pet_diary"), orderBy("time", "desc"));
@@ -137,14 +206,13 @@
                 const results = [];
                 snapshot.forEach(d => {
                     const data = d.data();
-                    // ペットIDが一致するもの、または旧データ（petIdなし）を表示
                     if (data.petId && pet && data.petId !== pet.id) return;
                     if (data.text && data.text.includes(word)) results.push(data);
                 });
 
                 listDiv.innerHTML = "";
                 if (results.length === 0) {
-                    listDiv.innerHTML = `<p class="empty-msg">「${word}」を含む記録は見つかりませんでした</p>`;
+                    listDiv.innerHTML = `<p class="empty-msg">${t.notFound(word)}</p>`;
                     return;
                 }
                 results.forEach(data => {
@@ -157,7 +225,7 @@
                     listDiv.appendChild(item);
                 });
             } catch(e) {
-                listDiv.innerHTML = "<p class='empty-msg'>読み込みに失敗しました。</p>";
+                listDiv.innerHTML = `<p class="empty-msg">${t.loadError}</p>`;
             }
         }
     </script>
