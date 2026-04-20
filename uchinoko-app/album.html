@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>動画・写真 - うちの子記録</title>
+    <title>うちの子 - アルバム</title>
     <style>
         *, *::before, *::after { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; width: 100%; overflow-x: hidden; }
@@ -38,53 +38,53 @@
     </style>
 </head>
 <body>
-    <a href="index.html" class="back-btn">← 戻る</a>
+    <a href="index.html" class="back-btn" id="t-back"></a>
     <div id="petBadge" class="pet-badge"></div>
-    <h1>📹 病院用 動画・写真</h1>
+    <h1 id="t-title"></h1>
 
     <div class="section">
-        <div class="section-title">① 動画または写真を選ぶ</div>
+        <div class="section-title" id="t-step1"></div>
         <input type="file" id="mediaFile" accept="image/*,video/*" style="font-size:16px; width:100%;">
-        <button class="green-btn" onclick="loadMedia()">読み込む</button>
-        <p class="notice">※ iPhoneの写真アプリから選べます。クラウドには保存しません。</p>
+        <button class="green-btn" onclick="loadMedia()" id="t-load-btn"></button>
+        <p class="notice" id="t-notice1"></p>
     </div>
 
     <div class="section" id="trimSection" style="display:none;">
-        <div class="section-title" id="trimTitle">② 見せたい部分を選ぶ</div>
+        <div class="section-title" id="trimTitle"></div>
         <video id="previewVideo" controls playsinline></video>
 
         <div id="sliderArea">
-            <div class="slider-label">▶ 開始位置をスライドで選んでください</div>
+            <div class="slider-label" id="t-slider-label"></div>
             <input type="range" id="startSlider" min="0" value="0" step="0.5">
-            <div class="time-display" id="timeDisplay">開始：0秒 → 終了：10秒</div>
+            <div class="time-display" id="timeDisplay"></div>
             <div class="trim-btns">
-                <button class="sub-btn" onclick="previewTrim()">▶ この部分を再生</button>
-                <button class="sub-btn" onclick="showFullscreen('trim')">🔍 全画面で確認</button>
+                <button class="sub-btn" onclick="previewTrim()" id="t-preview-btn"></button>
+                <button class="sub-btn" onclick="showFullscreen('trim')" id="t-fullscreen-btn"></button>
             </div>
             <div style="margin-top:15px; border-top:1px solid #ddd; padding-top:15px;">
-                <div class="slider-label">💾 この部分に名前をつけて保存</div>
-                <input type="text" class="name-input" id="clipName" placeholder="例：口を気にする、下痢の様子">
-                <button class="green-btn" onclick="saveClip()">病院用リストに追加する</button>
-                <p class="notice">※ 同じ動画から何か所でも保存できます</p>
+                <div class="slider-label" id="t-save-label"></div>
+                <input type="text" class="name-input" id="clipName">
+                <button class="green-btn" onclick="saveClip()" id="t-add-btn"></button>
+                <p class="notice" id="t-notice2"></p>
             </div>
         </div>
 
         <div id="photoArea" style="display:none;">
             <div class="trim-btns" style="margin-top:10px;">
-                <button class="sub-btn" onclick="showFullscreen('photo')">🔍 全画面で確認</button>
+                <button class="sub-btn" onclick="showFullscreen('photo')" id="t-photo-fullscreen"></button>
             </div>
             <div style="margin-top:15px; border-top:1px solid #ddd; padding-top:15px;">
-                <div class="slider-label">💾 この写真に名前をつけて保存</div>
-                <input type="text" class="name-input" id="photoName" placeholder="例：皮膚の状態、目やに">
-                <button class="green-btn" onclick="savePhoto()">病院用リストに追加する</button>
+                <div class="slider-label" id="t-photo-save-label"></div>
+                <input type="text" class="name-input" id="photoName">
+                <button class="green-btn" onclick="savePhoto()" id="t-photo-add-btn"></button>
             </div>
         </div>
     </div>
 
     <div class="section">
-        <div class="section-title">③ 病院用リスト（タップしてすぐ再生）</div>
-        <p class="notice" style="margin-top:0; margin-bottom:10px;">※ 再生するには先に①で同じファイルを読み込んでください</p>
-        <div id="clipList"><p class="empty-msg">まだ保存されていません</p></div>
+        <div class="section-title" id="t-step3"></div>
+        <p class="notice" id="t-notice3" style="margin-top:0; margin-bottom:10px;"></p>
+        <div id="clipList"></div>
     </div>
 
     <div class="modal" id="fullscreenModal">
@@ -96,7 +96,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, orderBy, where, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAOevKlIPTEu1pgZhyf_a-I2US5KbZQi2c",
@@ -110,6 +110,148 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        const i18n = {
+            ja: {
+                back: '← 戻る',
+                title: '📹 病院用 動画・写真',
+                step1: '① 動画または写真を選ぶ',
+                loadBtn: '読み込む',
+                notice1: '※ iPhoneの写真アプリから選べます。クラウドには保存しません。',
+                sliderLabel: '▶ 開始位置をスライドで選んでください',
+                previewBtn: '▶ この部分を再生',
+                fullscreenBtn: '🔍 全画面で確認',
+                saveLabel: '💾 この部分に名前をつけて保存',
+                clipPlaceholder: '例：口を気にする、下痢の様子',
+                addBtn: '病院用リストに追加する',
+                notice2: '※ 同じ動画から何か所でも保存できます',
+                photoFullscreen: '🔍 全画面で確認',
+                photoSaveLabel: '💾 この写真に名前をつけて保存',
+                photoPlaceholder: '例：皮膚の状態、目やに',
+                photoAddBtn: '病院用リストに追加する',
+                step3: '③ 病院用リスト（タップしてすぐ再生）',
+                notice3: '※ 再生するには先に①で同じファイルを読み込んでください',
+                playBtn: '▶ 再生する',
+                showBtn: '🔍 表示する',
+                delBtn: '削除',
+                empty: 'まだ保存されていません',
+                badge: (name) => `${name}の病院用アルバム`,
+                noPet: '🐾 病院用アルバム',
+                trimTitle: '② 見せたい部分を選ぶ（10秒）',
+                photoTitle: '② 写真のプレビュー',
+                timeDisplay: (s, e) => `開始：${s}秒 → 終了：${e}秒`,
+                confirmDelete: 'このクリップを削除しますか？',
+                errorNoFile: 'ファイルを選択してください',
+                errorNoName: '名前を入力してください',
+                errorNoPet: 'ペットを選択してください',
+                errorNoVideo: '動画を選択してください',
+                errorNoPhoto: '写真を選択してください',
+                errorSave: '保存に失敗しました',
+                added: (name) => `「${name}」を追加しました！`,
+                needLoad: 'まず①で同じ動画ファイルを読み込んでください'
+            },
+            en: {
+                back: '← Back',
+                title: '📹 Vet Visit Media',
+                step1: '① Select a video or photo',
+                loadBtn: 'Load file',
+                notice1: '※ Select from your photo library. Files are not saved to cloud.',
+                sliderLabel: '▶ Slide to choose start position',
+                previewBtn: '▶ Play this section',
+                fullscreenBtn: '🔍 View fullscreen',
+                saveLabel: '💾 Name and save this section',
+                clipPlaceholder: 'e.g. scratching ear, limping',
+                addBtn: 'Add to vet list',
+                notice2: '※ You can save multiple sections from the same video',
+                photoFullscreen: '🔍 View fullscreen',
+                photoSaveLabel: '💾 Name and save this photo',
+                photoPlaceholder: 'e.g. skin condition, eye discharge',
+                photoAddBtn: 'Add to vet list',
+                step3: '③ Vet list (tap to play)',
+                notice3: '※ Load the same file in ① before playing',
+                playBtn: '▶ Play',
+                showBtn: '🔍 Show',
+                delBtn: 'Delete',
+                empty: 'No items saved yet',
+                badge: (name) => `${name}'s vet album`,
+                noPet: '🐾 Vet album',
+                trimTitle: '② Select the section to show (10 sec)',
+                photoTitle: '② Photo preview',
+                timeDisplay: (s, e) => `Start: ${s}s → End: ${e}s`,
+                confirmDelete: 'Delete this clip?',
+                errorNoFile: 'Please select a file',
+                errorNoName: 'Please enter a name',
+                errorNoPet: 'Please select a pet',
+                errorNoVideo: 'Please select a video',
+                errorNoPhoto: 'Please select a photo',
+                errorSave: 'Failed to save',
+                added: (name) => `"${name}" added!`,
+                needLoad: 'Please load the same video file in ① first'
+            },
+            es: {
+                back: '← Volver',
+                title: '📹 Medios para el veterinario',
+                step1: '① Selecciona un video o foto',
+                loadBtn: 'Cargar archivo',
+                notice1: '※ Selecciona de tu galería. Los archivos no se guardan en la nube.',
+                sliderLabel: '▶ Desliza para elegir el inicio',
+                previewBtn: '▶ Reproducir sección',
+                fullscreenBtn: '🔍 Ver pantalla completa',
+                saveLabel: '💾 Nombra y guarda esta sección',
+                clipPlaceholder: 'Ej: rascándose la oreja, cojera',
+                addBtn: 'Agregar a lista del veterinario',
+                notice2: '※ Puedes guardar varias secciones del mismo video',
+                photoFullscreen: '🔍 Ver pantalla completa',
+                photoSaveLabel: '💾 Nombra y guarda esta foto',
+                photoPlaceholder: 'Ej: condición de la piel, secreción ocular',
+                photoAddBtn: 'Agregar a lista del veterinario',
+                step3: '③ Lista para el veterinario (toca para reproducir)',
+                notice3: '※ Carga el mismo archivo en ① antes de reproducir',
+                playBtn: '▶ Reproducir',
+                showBtn: '🔍 Mostrar',
+                delBtn: 'Eliminar',
+                empty: 'Aún no hay elementos guardados',
+                badge: (name) => `Álbum veterinario de ${name}`,
+                noPet: '🐾 Álbum veterinario',
+                trimTitle: '② Selecciona la sección a mostrar (10 seg)',
+                photoTitle: '② Vista previa de foto',
+                timeDisplay: (s, e) => `Inicio: ${s}s → Fin: ${e}s`,
+                confirmDelete: '¿Eliminar este clip?',
+                errorNoFile: 'Por favor selecciona un archivo',
+                errorNoName: 'Por favor ingresa un nombre',
+                errorNoPet: 'Por favor selecciona una mascota',
+                errorNoVideo: 'Por favor selecciona un video',
+                errorNoPhoto: 'Por favor selecciona una foto',
+                errorSave: 'Error al guardar',
+                added: (name) => `"${name}" agregado!`,
+                needLoad: 'Por favor carga el mismo archivo de video en ① primero'
+            }
+        };
+
+        const lang = localStorage.getItem('uchinoko_lang') || 'ja';
+        const t = i18n[lang];
+        document.documentElement.lang = lang;
+
+        // テキスト適用
+        document.getElementById('t-back').innerText = t.back;
+        document.getElementById('t-title').innerText = t.title;
+        document.getElementById('t-step1').innerText = t.step1;
+        document.getElementById('t-load-btn').innerText = t.loadBtn;
+        document.getElementById('t-notice1').innerText = t.notice1;
+        document.getElementById('t-slider-label').innerText = t.sliderLabel;
+        document.getElementById('t-preview-btn').innerText = t.previewBtn;
+        document.getElementById('t-fullscreen-btn').innerText = t.fullscreenBtn;
+        document.getElementById('t-save-label').innerText = t.saveLabel;
+        document.getElementById('clipName').placeholder = t.clipPlaceholder;
+        document.getElementById('t-add-btn').innerText = t.addBtn;
+        document.getElementById('t-notice2').innerText = t.notice2;
+        document.getElementById('t-photo-fullscreen').innerText = t.photoFullscreen;
+        document.getElementById('t-photo-save-label').innerText = t.photoSaveLabel;
+        document.getElementById('photoName').placeholder = t.photoPlaceholder;
+        document.getElementById('t-photo-add-btn').innerText = t.photoAddBtn;
+        document.getElementById('t-step3').innerText = t.step3;
+        document.getElementById('t-notice3').innerText = t.notice3;
+        document.getElementById('clipList').innerHTML = `<p class="empty-msg">${t.empty}</p>`;
+
         // ペット情報取得
         function getSelectedPet() {
             try {
@@ -121,7 +263,7 @@
 
         const pet = getSelectedPet();
         const icon = pet ? (pet.type === 'dog' ? '🐶' : '🐱') : '🐾';
-        document.getElementById('petBadge').innerText = pet ? `${icon} ${pet.name}の病院用アルバム` : '🐾 病院用アルバム';
+        document.getElementById('petBadge').innerText = pet ? `${icon} ${t.badge(pet.name)}` : t.noPet;
 
         const TRIM_SEC = 10;
         let currentFile = null;
@@ -131,7 +273,7 @@
 
         window.loadMedia = function() {
             const file = document.getElementById('mediaFile').files[0];
-            if (!file) return alert("ファイルを選択してください");
+            if (!file) return alert(t.errorNoFile);
             currentFile = file;
             isVideo = file.type.startsWith('video');
             if (currentObjectURL) URL.revokeObjectURL(currentObjectURL);
@@ -139,7 +281,7 @@
             document.getElementById('trimSection').style.display = 'block';
 
             if (isVideo) {
-                document.getElementById('trimTitle').textContent = '② 見せたい部分を選ぶ（10秒）';
+                document.getElementById('trimTitle').textContent = t.trimTitle;
                 document.getElementById('sliderArea').style.display = 'block';
                 document.getElementById('photoArea').style.display = 'none';
                 const video = document.getElementById('previewVideo');
@@ -153,7 +295,7 @@
                     updateTimeDisplay(0);
                 };
             } else {
-                document.getElementById('trimTitle').textContent = '② 写真のプレビュー';
+                document.getElementById('trimTitle').textContent = t.photoTitle;
                 document.getElementById('sliderArea').style.display = 'none';
                 document.getElementById('photoArea').style.display = 'block';
                 document.getElementById('previewVideo').style.display = 'none';
@@ -161,15 +303,15 @@
         };
 
         document.getElementById('startSlider').addEventListener('input', function() {
-            const t = parseFloat(this.value);
-            updateTimeDisplay(t);
-            document.getElementById('previewVideo').currentTime = t;
+            const time = parseFloat(this.value);
+            updateTimeDisplay(time);
+            document.getElementById('previewVideo').currentTime = time;
         });
 
-        function updateTimeDisplay(t) {
-            const end = Math.min(t + TRIM_SEC, duration);
+        function updateTimeDisplay(time) {
+            const end = Math.min(time + TRIM_SEC, duration);
             document.getElementById('timeDisplay').textContent =
-                `開始：${t.toFixed(1)}秒 → 終了：${end.toFixed(1)}秒`;
+                t.timeDisplay(time.toFixed(1), end.toFixed(1));
         }
 
         window.previewTrim = function() {
@@ -197,7 +339,7 @@
                     setTimeout(() => modalVideo.pause(), TRIM_SEC * 1000);
                 };
                 document.getElementById('modalLabel').textContent =
-                    `「${document.getElementById('clipName').value || '未保存'}」`;
+                    `「${document.getElementById('clipName').value || ''}」`;
             } else if (mode === 'play') {
                 modalVideo.style.display = 'block';
                 modalImage.style.display = 'none';
@@ -213,7 +355,7 @@
                 modalImage.style.display = 'block';
                 modalImage.src = currentObjectURL;
                 document.getElementById('modalLabel').textContent =
-                    document.getElementById('photoName').value || '写真';
+                    document.getElementById('photoName').value || '';
             }
         };
 
@@ -224,76 +366,67 @@
 
         window.saveClip = async function() {
             const name = document.getElementById('clipName').value.trim();
-            if (!name) return alert("名前を入力してください");
-            if (!currentFile) return alert("動画を選択してください");
-            if (!pet) return alert("ペットを選択してください");
+            if (!name) return alert(t.errorNoName);
+            if (!currentFile) return alert(t.errorNoVideo);
+            if (!pet) return alert(t.errorNoPet);
             const start = parseFloat(document.getElementById('startSlider').value);
             try {
                 await addDoc(collection(db, "hospital_clips"), {
-                    name,
-                    type: 'video',
+                    name, type: 'video',
                     fileName: currentFile.name,
                     startTime: start,
                     duration: TRIM_SEC,
-                    petId: pet.id,       // ← 追加
-                    petName: pet.name,   // ← 追加
+                    petId: pet.id,
+                    petName: pet.name,
                     timestamp: new Date()
                 });
                 document.getElementById('clipName').value = '';
-                alert(`「${name}」を追加しました！`);
-            } catch(e) { alert("保存に失敗しました"); }
+                alert(t.added(name));
+            } catch(e) { alert(t.errorSave); }
         };
 
         window.savePhoto = async function() {
             const name = document.getElementById('photoName').value.trim();
-            if (!name) return alert("名前を入力してください");
-            if (!currentFile) return alert("写真を選択してください");
-            if (!pet) return alert("ペットを選択してください");
+            if (!name) return alert(t.errorNoName);
+            if (!currentFile) return alert(t.errorNoPhoto);
+            if (!pet) return alert(t.errorNoPet);
             try {
                 await addDoc(collection(db, "hospital_clips"), {
-                    name,
-                    type: 'photo',
+                    name, type: 'photo',
                     fileName: currentFile.name,
-                    petId: pet.id,       // ← 追加
-                    petName: pet.name,   // ← 追加
+                    petId: pet.id,
+                    petName: pet.name,
                     timestamp: new Date()
                 });
                 document.getElementById('photoName').value = '';
-                alert(`「${name}」を追加しました！`);
-            } catch(e) { alert("保存に失敗しました"); }
+                alert(t.added(name));
+            } catch(e) { alert(t.errorSave); }
         };
 
         window.playClip = function(startTime, label) {
-            if (!currentFile) {
-                alert("まず①で同じ動画ファイルを読み込んでください");
-                return;
-            }
+            if (!currentFile) return alert(t.needLoad);
             window._playStart = startTime;
             window._playLabel = label;
             showFullscreen('play');
         };
 
         window.deleteClip = async function(id) {
-            if (confirm("このクリップを削除しますか？")) {
+            if (confirm(t.confirmDelete)) {
                 await deleteDoc(doc(db, "hospital_clips", id));
             }
         };
 
-        // ペットIDでフィルタしてリスト表示
         function loadClips() {
             const q = query(collection(db, "hospital_clips"), orderBy("timestamp", "desc"));
             onSnapshot(q, (snapshot) => {
                 const listDiv = document.getElementById('clipList');
                 listDiv.innerHTML = "";
                 let count = 0;
-
                 snapshot.forEach(d => {
                     const data = d.data();
                     const id = d.id;
-                    // ペットIDが一致するもの、または旧データ（petIdなし）を表示
                     if (data.petId && pet && data.petId !== pet.id) return;
                     count++;
-
                     const item = document.createElement('div');
                     item.className = 'clip-item';
                     const infoText = data.type === 'video'
@@ -304,15 +437,14 @@
                         <div class="clip-info">${infoText}</div>
                         <div class="clip-btns">
                             ${data.type === 'video'
-                                ? `<button class="play-btn" onclick="playClip(${data.startTime}, '${data.name}')">▶ 再生する</button>`
-                                : `<button class="play-btn" onclick="showFullscreen('photo')">🔍 表示する</button>`}
-                            <button class="del-btn" onclick="deleteClip('${id}')">削除</button>
+                                ? `<button class="play-btn" onclick="playClip(${data.startTime}, '${data.name}')">${t.playBtn}</button>`
+                                : `<button class="play-btn" onclick="showFullscreen('photo')">${t.showBtn}</button>`}
+                            <button class="del-btn" onclick="deleteClip('${id}')">${t.delBtn}</button>
                         </div>`;
                     listDiv.appendChild(item);
                 });
-
                 if (count === 0) {
-                    listDiv.innerHTML = '<p class="empty-msg">まだ保存されていません</p>';
+                    listDiv.innerHTML = `<p class="empty-msg">${t.empty}</p>`;
                 }
             });
         }
