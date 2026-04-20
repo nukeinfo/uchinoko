@@ -51,8 +51,9 @@ exports.handler = async (event) => {
             {
               type: "text",
               text: `この血液検査の用紙から数値を読み取ってください。
-日本語・英語・スペイン語どの用紙でも対応します。
-黒字・赤字・H・L マークがあっても数値のみ読み取ってください。
+日本語・英語（アメリカ・カナダ・オーストラリア）・スペイン語など
+どの国の用紙でも対応します。
+黒字・赤字・H・L・フラグマークがあっても数値のみ読み取ってください。
 必ずJSON形式のみで返してください。余分なテキストは不要です。
 
 {"RBC":"","HCT":"","HGB":"","MCV":"","MCH":"","MCHC":"","RDW":"","PRET":"","RET":"","RETICHGB":"","WBC":"","NEU":"","LYM":"","MON":"","EOS":"","BAS":"","NEUN":"","LYMN":"","MONN":"","EOSN":"","BASN":"","PLT":"","MPV":"","PCT":""}
@@ -60,36 +61,37 @@ exports.handler = async (event) => {
 各キーと対応する項目名（日本語・英語・スペイン語）:
 
 RBC = 赤血球数 / RBC / Glóbulos Rojos
-HCT = ヘマトクリット / Hematocrit / Hematocrito
-HGB = ヘモグロビン濃度 / Hemoglobin / Hemoglobina
+HCT = ヘマトクリット / Hematocrit / HCT / Hematocrito
+HGB = ヘモグロビン濃度 / Hemoglobin / HGB / Hemoglobina
 MCV = 平均赤血球容積 / MCV / Volumen Corpuscular Medio
 MCH = 平均赤血球ヘモグロビン量 / MCH / HCM
 MCHC = 平均赤血球ヘモグロビン濃度 / MCHC / CHCM
 RDW = 赤血球分布幅 / RDW / Amplitud de Distribución Eritrocitaria
-PRET = %網状赤血球 / % Reticulocyte / % Reticulocitos
-RET = 網状赤血球数 / Reticulocytes / Recuento de Reticulocitos
-RETICHGB = 網状赤血球ヘモグロビン / Reticulocyte Hemoglobin / Hemoglobina de Reticulocitos
+PRET = %網状赤血球 / % Reticulocyte / % RETICULOCYTE / % Reticulocitos
+RET = 網状赤血球数 / Reticulocytes / RETICULOCYTE / Recuento de Reticulocitos
+RETICHGB = 網状赤血球ヘモグロビン / Reticulocyte Hemoglobin / RETIC-HGB / Hemoglobina de Reticulocitos
 WBC = 白血球数 / WBC / Glóbulos Blancos
-NEU = 好中球% / % Neutrophils / Neutrófilos %
-LYM = リンパ球% / % Lymphocytes / Linfocitos %
-MON = 単球% / % Monocytes / Monocitos %
-EOS = 好酸球% / % Eosinophils / Eosinófilos %
-BAS = 好塩基球% / % Basophils / Basófilos %
-NEUN = 好中球数 / Neutrophils (absolute) / Recuento de Neutrófilos
-LYMN = リンパ球数 / Lymphocytes (absolute) / Recuento de Linfocitos
-MONN = 単球数 / Monocytes (absolute) / Recuento de Monocitos
-EOSN = 好酸球数 / Eosinophils (absolute) / Recuento de Eosinófilos
-BASN = 好塩基球数 / Basophils (absolute) / Recuento de Basófilos
-PLT = 血小板 / Platelets / Plaquetas
+NEU = 好中球% / % Neutrophils / % NEUTROPHIL / Neutrófilos %
+LYM = リンパ球% / % Lymphocytes / % LYMPHOCYTE / Linfocitos %
+MON = 単球% / % Monocytes / % MONOCYTE / Monocitos %
+EOS = 好酸球% / % Eosinophils / % EOSINOPHIL / Eosinófilos %
+BAS = 好塩基球% / % Basophils / % BASOPHIL / Basófilos %
+NEUN = 好中球数 / Neutrophils / NEUTROPHIL (absolute) / Recuento de Neutrófilos
+LYMN = リンパ球数 / Lymphocytes / LYMPHOCYTE (absolute) / Recuento de Linfocitos
+MONN = 単球数 / Monocytes / MONOCYTE (absolute) / Recuento de Monocitos
+EOSN = 好酸球数 / Eosinophils / EOSINOPHIL (absolute) / Recuento de Eosinófilos
+BASN = 好塩基球数 / Basophils / BASOPHIL (absolute) / Recuento de Basófilos
+PLT = 血小板 / Platelets / AUTO PLATELET / Plaquetas
 MPV = 平均血小板容積 / MPV / Volumen Plaquetario Medio
 PCT = 血小板クリット / PCT / Plaquetocrito
 
 単位の変換ルール（重要）:
 - HCT: L/L表記（例 0.38）の場合は%に変換して入力（例 38.0）
 - HGB: g/L表記（例 134）の場合はg/dLに変換（例 13.4）
-- RBC: x10E12/L表記はそのまま入力
-- WBC・NEUN等: x10E9/L表記はそのまま入力
-- PLT: x10E9/L表記はそのまま入力
+- RBC: x10E12/L または M/uL 表記はそのまま入力
+- WBC: K/uL表記（例 7.9）はそのまま入力
+- NEUN等絶対数: /uL表記（例 5909）の場合は÷1000して入力（例 5.909）
+- PLT: K/uL または x10E9/L 表記はそのまま入力
 
 数値が見つからない項目は空文字のままにしてください。
 JSONのみ返してください。`
