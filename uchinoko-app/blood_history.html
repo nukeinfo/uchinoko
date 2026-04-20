@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>血液検査履歴 - うちの子記録</title>
+    <title>うちの子 - 血液検査履歴</title>
     <style>
         *, *::before, *::after { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; width: 100%; overflow-x: hidden; }
@@ -29,10 +29,10 @@
 </head>
 <body>
 <div class="container">
-    <a href="blood.html" class="back-btn">← 戻る</a>
+    <a href="blood.html" class="back-btn" id="t-back"></a>
     <div id="petBadge" class="pet-badge"></div>
-    <h1 id="page-title">📋 血液検査履歴</h1>
-    <div id="list"><p style="text-align:center; color:#888;">読み込み中...</p></div>
+    <h1 id="t-title"></h1>
+    <div id="list"><p style="text-align:center; color:#888;" id="t-loading"></p></div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -50,6 +50,101 @@
     firebase.initializeApp(firebaseConfig);
     var db = firebase.firestore();
 
+    var lang = localStorage.getItem('uchinoko_lang') || 'ja';
+    document.documentElement.lang = lang;
+
+    var i18n = {
+        ja: {
+            back: '← 戻る',
+            title: '📋 血液検査履歴',
+            loading: '読み込み中...',
+            noData: 'まだ記録がありません',
+            loadError: '読み込みに失敗しました',
+            editHint: '✏️ 数値をタップすると編集できます',
+            saveBtn: '💾 修正を保存する',
+            deleteBtn: '🗑 この記録を削除する',
+            confirmDelete: (date) => date + ' の記録を削除しますか？',
+            saved: '保存しました！',
+            saveError: (msg) => '保存に失敗しました: ' + msg,
+            deleteError: (msg) => '削除に失敗しました: ' + msg,
+            badge: (name) => name + 'の血液検査履歴',
+            group1: '赤血球系（貧血の評価）',
+            group2: '白血球系（免疫の評価）',
+            group3: '血小板（止血）',
+            labels: {
+                RBC:'赤血球数(RBC)', HCT:'ヘマトクリット(HCT)', HGB:'ヘモグロビン濃度(HGB)',
+                MCV:'平均赤血球容積(MCV)', MCH:'平均赤血球ヘモグロビン量(MCH)',
+                MCHC:'平均赤血球ヘモグロビン濃度(MCHC)', RDW:'赤血球分布幅',
+                PRET:'%網状赤血球', RET:'網状赤血球数(RET)', RETICHGB:'網状赤血球ヘモグロビン(RETIC-HGB)',
+                WBC:'白血球数(WBC)', NEU:'好中球%(Neu)', LYM:'リンパ球%(Lym)',
+                MON:'単球%(Mon)', EOS:'好酸球%(Eos)', BAS:'好塩基球%(Bas)',
+                NEUN:'好中球数(Neu)', LYMN:'リンパ球数(Lym)', MONN:'単球数(Mon)',
+                EOSN:'好酸球数(Eos)', BASN:'好塩基球数(Bas)',
+                PLT:'血小板(PLT)', MPV:'平均血小板容積(MPV)', PCT:'血小板クリット(PCT)'
+            }
+        },
+        en: {
+            back: '← Back',
+            title: '📋 Blood Test History',
+            loading: 'Loading...',
+            noData: 'No records yet',
+            loadError: 'Failed to load records',
+            editHint: '✏️ Tap a value to edit it',
+            saveBtn: '💾 Save changes',
+            deleteBtn: '🗑 Delete this record',
+            confirmDelete: (date) => 'Delete record from ' + date + '?',
+            saved: 'Saved!',
+            saveError: (msg) => 'Failed to save: ' + msg,
+            deleteError: (msg) => 'Failed to delete: ' + msg,
+            badge: (name) => name + "'s blood test history",
+            group1: 'Red Blood Cells (Anemia)',
+            group2: 'White Blood Cells (Immunity)',
+            group3: 'Platelets (Clotting)',
+            labels: {
+                RBC:'Red Blood Cell Count (RBC)', HCT:'Hematocrit (HCT)', HGB:'Hemoglobin (HGB)',
+                MCV:'Mean Corpuscular Volume (MCV)', MCH:'Mean Corpuscular Hemoglobin (MCH)',
+                MCHC:'MCHC', RDW:'Red Cell Distribution Width (RDW)',
+                PRET:'% Reticulocytes', RET:'Reticulocyte Count (RET)', RETICHGB:'Reticulocyte Hemoglobin',
+                WBC:'White Blood Cell Count (WBC)', NEU:'Neutrophils % (Neu)', LYM:'Lymphocytes % (Lym)',
+                MON:'Monocytes % (Mon)', EOS:'Eosinophils % (Eos)', BAS:'Basophils % (Bas)',
+                NEUN:'Neutrophil Count (Neu)', LYMN:'Lymphocyte Count (Lym)', MONN:'Monocyte Count (Mon)',
+                EOSN:'Eosinophil Count (Eos)', BASN:'Basophil Count (Bas)',
+                PLT:'Platelets (PLT)', MPV:'Mean Platelet Volume (MPV)', PCT:'Plateletcrit (PCT)'
+            }
+        },
+        es: {
+            back: '← Volver',
+            title: '📋 Historial de Análisis de Sangre',
+            loading: 'Cargando...',
+            noData: 'Aún no hay registros',
+            loadError: 'Error al cargar registros',
+            editHint: '✏️ Toca un valor para editarlo',
+            saveBtn: '💾 Guardar cambios',
+            deleteBtn: '🗑 Eliminar este registro',
+            confirmDelete: (date) => '¿Eliminar registro del ' + date + '?',
+            saved: '¡Guardado!',
+            saveError: (msg) => 'Error al guardar: ' + msg,
+            deleteError: (msg) => 'Error al eliminar: ' + msg,
+            badge: (name) => 'Historial de ' + name,
+            group1: 'Glóbulos Rojos (Anemia)',
+            group2: 'Glóbulos Blancos (Inmunidad)',
+            group3: 'Plaquetas (Coagulación)',
+            labels: {
+                RBC:'Glóbulos Rojos (RBC)', HCT:'Hematocrito (HCT)', HGB:'Hemoglobina (HGB)',
+                MCV:'Volumen Corpuscular Medio (MCV)', MCH:'HCM', MCHC:'CHCM',
+                RDW:'Amplitud de Distribución Eritrocitaria (RDW)',
+                PRET:'% Reticulocitos', RET:'Recuento de Reticulocitos', RETICHGB:'Hemoglobina de Reticulocitos',
+                WBC:'Glóbulos Blancos (WBC)', NEU:'Neutrófilos % (Neu)', LYM:'Linfocitos % (Lym)',
+                MON:'Monocitos % (Mon)', EOS:'Eosinófilos % (Eos)', BAS:'Basófilos % (Bas)',
+                NEUN:'Recuento de Neutrófilos', LYMN:'Recuento de Linfocitos', MONN:'Recuento de Monocitos',
+                EOSN:'Recuento de Eosinófilos', BASN:'Recuento de Basófilos',
+                PLT:'Plaquetas (PLT)', MPV:'Volumen Plaquetario Medio (MPV)', PCT:'Plaquetocrito (PCT)'
+            }
+        }
+    };
+
+    var t = i18n[lang];
+
     // ペット情報取得
     function getSelectedPet() {
         try {
@@ -63,27 +158,15 @@
     var petType = pet ? pet.type : (localStorage.getItem('selected_pet_type') || 'cat');
     var icon = petType === 'dog' ? '🐶' : '🐱';
 
-    var badgeEl = document.getElementById('petBadge');
-    badgeEl.innerText = pet ? (icon + ' ' + pet.name + 'の血液検査履歴') : (icon + ' 血液検査履歴');
-    document.getElementById('page-title').innerText = '📋 血液検査履歴';
-
-    var labels = {
-        RBC:'赤血球数(RBC)', HCT:'ヘマトクリット(HCT)', HGB:'ヘモグロビン濃度(HGB)',
-        MCV:'平均赤血球容積(MCV)', MCH:'平均赤血球ヘモグロビン量(MCH)',
-        MCHC:'平均赤血球ヘモグロビン濃度(MCHC)', RDW:'赤血球分布幅',
-        PRET:'%網状赤血球', RET:'網状赤血球数(RET)',
-        RETICHGB:'網状赤血球ヘモグロビン(RETIC-HGB)',
-        WBC:'白血球数(WBC)', NEU:'好中球%(Neu)', LYM:'リンパ球%(Lym)',
-        MON:'単球%(Mon)', EOS:'好酸球%(Eos)', BAS:'好塩基球%(Bas)',
-        NEUN:'好中球数(Neu)', LYMN:'リンパ球数(Lym)', MONN:'単球数(Mon)',
-        EOSN:'好酸球数(Eos)', BASN:'好塩基球数(Bas)',
-        PLT:'血小板(PLT)', MPV:'平均血小板容積(MPV)', PCT:'血小板クリット(PCT)'
-    };
+    document.getElementById('t-back').innerText = t.back;
+    document.getElementById('t-title').innerText = t.title;
+    document.getElementById('t-loading').innerText = t.loading;
+    document.getElementById('petBadge').innerText = pet ? (icon + ' ' + t.badge(pet.name)) : (icon + ' ' + t.title);
 
     var groups = {
-        '赤血球系（貧血の評価）': ['RBC','HCT','HGB','MCV','MCH','MCHC','RDW','PRET','RET','RETICHGB'],
-        '白血球系（免疫の評価）': ['WBC','NEU','LYM','MON','EOS','BAS','NEUN','LYMN','MONN','EOSN','BASN'],
-        '血小板（止血）': ['PLT','MPV','PCT']
+        0: { name: t.group1, keys: ['RBC','HCT','HGB','MCV','MCH','MCHC','RDW','PRET','RET','RETICHGB'] },
+        1: { name: t.group2, keys: ['WBC','NEU','LYM','MON','EOS','BAS','NEUN','LYMN','MONN','EOSN','BASN'] },
+        2: { name: t.group3, keys: ['PLT','MPV','PCT'] }
     };
 
     var allKeys = ['RBC','HCT','HGB','MCV','MCH','MCHC','RDW','PRET','RET','RETICHGB',
@@ -98,24 +181,19 @@
                 docs.push({ id: doc.id, d: doc.data() });
             });
 
-            // 日付順に並び替え
             docs.sort(function(a, b) {
                 return a.d.testDate < b.d.testDate ? 1 : -1;
             });
 
-            // ペットIDでフィルタ（旧データはpetIdなしなのでpetTypeで判定）
             var filtered = docs.filter(function(item) {
-                if (pet && item.d.petId) {
-                    return item.d.petId === pet.id;
-                }
-                // 旧データ互換
+                if (pet && item.d.petId) return item.d.petId === pet.id;
                 return !item.d.petId && (!item.d.petType || item.d.petType === petType);
             });
 
             listEl.innerHTML = '';
 
             if (filtered.length === 0) {
-                listEl.innerHTML = '<p class="no-data">まだ記録がありません</p>';
+                listEl.innerHTML = '<p class="no-data">' + t.noData + '</p>';
                 return;
             }
 
@@ -139,20 +217,20 @@
 
                 var hint = document.createElement('p');
                 hint.className = 'edit-hint';
-                hint.innerText = '✏️ 数値をタップすると編集できます';
+                hint.innerText = t.editHint;
                 box.appendChild(hint);
 
-                Object.keys(groups).forEach(function(groupName) {
-                    var keys = groups[groupName];
-                    var hasData = keys.some(function(k) { return d[k] || d[k] === 0; });
+                Object.keys(groups).forEach(function(gi) {
+                    var grp = groups[gi];
+                    var hasData = grp.keys.some(function(k) { return d[k] || d[k] === 0; });
                     if (!hasData) return;
 
                     var gt = document.createElement('div');
                     gt.className = 'group-title';
-                    gt.innerText = groupName;
+                    gt.innerText = grp.name;
                     box.appendChild(gt);
 
-                    keys.forEach(function(key) {
+                    grp.keys.forEach(function(key) {
                         if (!d[key] && d[key] !== 0) return;
 
                         var row = document.createElement('div');
@@ -160,7 +238,7 @@
 
                         var label = document.createElement('span');
                         label.className = 'detail-label';
-                        label.innerText = labels[key] || key;
+                        label.innerText = t.labels[key] || key;
 
                         var valueSpan = document.createElement('span');
                         valueSpan.className = 'detail-value';
@@ -183,9 +261,7 @@
 
                         input.onblur = function() {
                             var newVal = input.value;
-                            if (newVal !== '') {
-                                valueSpan.innerText = newVal;
-                            }
+                            if (newVal !== '') valueSpan.innerText = newVal;
                             valueSpan.style.display = 'inline-block';
                             input.style.display = 'none';
                         };
@@ -200,7 +276,7 @@
                 var saveBtn = document.createElement('button');
                 saveBtn.className = 'save-btn';
                 saveBtn.id = saveBtnId;
-                saveBtn.innerText = '💾 修正を保存する';
+                saveBtn.innerText = t.saveBtn;
                 saveBtn.onclick = function() {
                     var updateData = {};
                     allKeys.forEach(function(key) {
@@ -210,24 +286,24 @@
                         else if (d[key]) updateData[key] = d[key];
                     });
                     db.collection('blood_tests').doc(id).update(updateData).then(function() {
-                        alert('保存しました！');
+                        alert(t.saved);
                         saveBtn.style.display = 'none';
                         loadList();
                     }).catch(function(e) {
-                        alert('保存に失敗しました: ' + e.message);
+                        alert(t.saveError(e.message));
                     });
                 };
                 box.appendChild(saveBtn);
 
                 var delBtn = document.createElement('button');
                 delBtn.className = 'delete-btn';
-                delBtn.innerText = '🗑 この記録を削除する';
+                delBtn.innerText = t.deleteBtn;
                 delBtn.onclick = function() {
-                    if (confirm(d.testDate + ' の記録を削除しますか？')) {
+                    if (confirm(t.confirmDelete(d.testDate))) {
                         db.collection('blood_tests').doc(id).delete().then(function() {
                             loadList();
                         }).catch(function(e) {
-                            alert('削除に失敗しました: ' + e.message);
+                            alert(t.deleteError(e.message));
                         });
                     }
                 };
@@ -238,7 +314,8 @@
             });
 
         }).catch(function(e) {
-            document.getElementById('list').innerHTML = '<p class="no-data">読み込みに失敗しました<br><small>' + e.message + '</small></p>';
+            document.getElementById('list').innerHTML =
+                '<p class="no-data">' + t.loadError + '<br><small>' + e.message + '</small></p>';
         });
     }
 
