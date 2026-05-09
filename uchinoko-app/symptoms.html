@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>うちの子 - 症状</title>
     <style>
         *, *::before, *::after { box-sizing: border-box; }
@@ -67,8 +70,7 @@
 
         const i18n = {
             ja: {
-                back: '← 戻る',
-                title: '症状別・事実の抽出',
+                back: '← 戻る', title: '症状別・事実の抽出',
                 hint: '気になる症状ワードを5つまで設定してください',
                 saveBtn: 'ワードを更新する',
                 badge: (name) => `${name}の症状記録`,
@@ -84,8 +86,7 @@
                 loadError: '読み込みに失敗しました'
             },
             en: {
-                back: '← Back',
-                title: 'Symptom Search',
+                back: '← Back', title: 'Symptom Search',
                 hint: 'Set up to 5 symptom keywords to search',
                 saveBtn: 'Update keywords',
                 badge: (name) => `${name}'s symptoms`,
@@ -101,8 +102,7 @@
                 loadError: 'Failed to load'
             },
             es: {
-                back: '← Volver',
-                title: 'Búsqueda de síntomas',
+                back: '← Volver', title: 'Búsqueda de síntomas',
                 hint: 'Configura hasta 5 palabras clave de síntomas',
                 saveBtn: 'Actualizar palabras clave',
                 badge: (name) => `Síntomas de ${name}`,
@@ -121,22 +121,19 @@
 
         const lang = localStorage.getItem('uchinoko_lang') || 'ja';
         const t = i18n[lang];
+        document.documentElement.lang = lang;
 
-        // テキスト適用
         document.getElementById('t-back').innerText = t.back;
         document.getElementById('t-title').innerText = t.title;
         document.getElementById('t-hint').innerText = t.hint;
         document.getElementById('t-save-btn').innerText = t.saveBtn;
         document.getElementById('currentKeywordTitle').innerText = t.tapHint;
-        document.documentElement.lang = lang;
 
-        // プレースホルダー設定
         t.placeholders.forEach((ph, i) => {
             const el = document.getElementById(`placeholder${i + 1}`);
             if (el) el.placeholder = ph;
         });
 
-        // ペット情報取得
         function getSelectedPet() {
             try {
                 const pets = JSON.parse(localStorage.getItem('uchinoko_pets')) || [];
@@ -173,10 +170,8 @@
                 const snap = await getDoc(doc(db, "settings", wordsDocId));
                 const words = snap.exists() ? snap.data().words :
                     (await getDoc(doc(db, "settings", "symptom_words"))).data()?.words || [];
-
                 const inputs = document.querySelectorAll('.word-input');
                 inputs.forEach((input, i) => { input.value = words[i] || ""; });
-
                 const btnContainer = document.getElementById('filterButtons');
                 btnContainer.innerHTML = "";
                 if (words.length === 0) {
@@ -199,7 +194,6 @@
             document.getElementById('currentKeywordTitle').textContent = t.resultTitle(word);
             const listDiv = document.getElementById('filteredList');
             listDiv.innerHTML = `<p class='loading-msg'>${t.loading}</p>`;
-
             try {
                 const q = query(collection(db, "pet_diary"), orderBy("time", "desc"));
                 const snapshot = await getDocs(q);
@@ -209,7 +203,6 @@
                     if (data.petId && pet && data.petId !== pet.id) return;
                     if (data.text && data.text.includes(word)) results.push(data);
                 });
-
                 listDiv.innerHTML = "";
                 if (results.length === 0) {
                     listDiv.innerHTML = `<p class="empty-msg">${t.notFound(word)}</p>`;
@@ -229,9 +222,9 @@
             }
         }
     </script>
-<div style="text-align:center; margin-top:20px; padding-bottom:20px;">
-    <span style="display:block; color:#888; font-size:13px; font-weight:bold;">© T.K.C.</span>
-    <small style="color:#666; font-size:10px; letter-spacing:0.5px;">True Kind Care for all the loved ones</small>
-</div>
+    <div style="text-align:center; margin-top:20px; padding-bottom:20px;">
+        <span style="display:block; color:#888; font-size:13px; font-weight:bold;">© T.K.C.</span>
+        <small style="color:#666; font-size:10px; letter-spacing:0.5px;">True Kind Care for all the loved ones</small>
+    </div>
 </body>
 </html>
