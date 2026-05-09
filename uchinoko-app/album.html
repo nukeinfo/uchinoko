@@ -18,6 +18,8 @@
         .section-title { font-weight: bold; font-size: 16px; margin-bottom: 12px; border-left: 5px solid #adff2f; padding-left: 8px; }
         .green-btn { background-color: #adff2f; border: 2px solid #000; border-radius: 10px; font-weight: bold; width: 100%; padding: 15px; font-size: 17px; cursor: pointer; box-shadow: 2px 2px 0px #000; -webkit-appearance: none; margin-top: 10px; }
         .sub-btn { background: #fff; border: 2px solid #000; border-radius: 8px; font-weight: bold; padding: 10px; font-size: 14px; cursor: pointer; flex: 1; }
+        .select-btn { background-color: #fff; border: 2px solid #000; border-radius: 10px; font-weight: bold; width: 100%; padding: 15px; font-size: 16px; cursor: pointer; box-shadow: 2px 2px 0px #000; -webkit-appearance: none; margin-top: 5px; text-align: center; }
+        .file-name { font-size: 13px; color: #555; margin-top: 8px; min-height: 18px; }
         #previewVideo { width: 100%; border-radius: 8px; background: #000; display: block; margin-bottom: 10px; }
         .slider-label { font-size: 13px; font-weight: bold; margin-bottom: 4px; }
         input[type="range"] { width: 100%; }
@@ -47,7 +49,10 @@
 
     <div class="section">
         <div class="section-title" id="t-step1"></div>
-        <input type="file" id="mediaFile" accept="image/*,video/*" style="font-size:16px; width:100%;">
+        <!-- ブラウザのデフォルトボタンを隠してカスタムボタンを使う -->
+        <input type="file" id="mediaFile" accept="image/*,video/*" style="display:none;">
+        <button class="select-btn" onclick="document.getElementById('mediaFile').click()" id="t-select-btn"></button>
+        <div class="file-name" id="t-file-name"></div>
         <button class="green-btn" onclick="loadMedia()" id="t-load-btn"></button>
         <p class="notice" id="t-notice1"></p>
     </div>
@@ -114,7 +119,10 @@
         const i18n = {
             ja: {
                 back: '← 戻る', title: '📹 病院用 動画・写真',
-                step1: '① 動画または写真を選ぶ', loadBtn: '読み込む',
+                step1: '① 動画または写真を選ぶ',
+                selectBtn: '📁 ファイルを選ぶ',
+                noFile: 'ファイルが選択されていません',
+                loadBtn: '読み込む',
                 notice1: '※ iPhoneの写真アプリから選べます。クラウドには保存しません。',
                 sliderLabel: '▶ 開始位置をスライドで選んでください',
                 previewBtn: '▶ この部分を再生', fullscreenBtn: '🔍 全画面で確認',
@@ -147,7 +155,10 @@
             },
             en: {
                 back: '← Back', title: '📹 Vet Visit Media',
-                step1: '① Select a video or photo', loadBtn: 'Load file',
+                step1: '① Select a video or photo',
+                selectBtn: '📁 Choose file',
+                noFile: 'No file selected',
+                loadBtn: 'Load file',
                 notice1: '※ Select from your photo library. Files are not saved to cloud.',
                 sliderLabel: '▶ Slide to choose start position',
                 previewBtn: '▶ Play this section', fullscreenBtn: '🔍 View fullscreen',
@@ -180,7 +191,10 @@
             },
             es: {
                 back: '← Volver', title: '📹 Medios para el veterinario',
-                step1: '① Selecciona un video o foto', loadBtn: 'Cargar archivo',
+                step1: '① Selecciona un video o foto',
+                selectBtn: '📁 Elegir archivo',
+                noFile: 'Ningún archivo seleccionado',
+                loadBtn: 'Cargar archivo',
                 notice1: '※ Selecciona de tu galería. Los archivos no se guardan en la nube.',
                 sliderLabel: '▶ Desliza para elegir el inicio',
                 previewBtn: '▶ Reproducir sección', fullscreenBtn: '🔍 Ver pantalla completa',
@@ -220,6 +234,8 @@
         document.getElementById('t-back').innerText = t.back;
         document.getElementById('t-title').innerText = t.title;
         document.getElementById('t-step1').innerText = t.step1;
+        document.getElementById('t-select-btn').innerText = t.selectBtn;
+        document.getElementById('t-file-name').innerText = t.noFile;
         document.getElementById('t-load-btn').innerText = t.loadBtn;
         document.getElementById('t-notice1').innerText = t.notice1;
         document.getElementById('t-slider-label').innerText = t.sliderLabel;
@@ -236,6 +252,12 @@
         document.getElementById('t-step3').innerText = t.step3;
         document.getElementById('t-notice3').innerText = t.notice3;
         document.getElementById('clipList').innerHTML = `<p class="empty-msg">${t.empty}</p>`;
+
+        // ファイル選択時にファイル名を表示
+        document.getElementById('mediaFile').addEventListener('change', function() {
+            const fileName = this.files[0] ? this.files[0].name : t.noFile;
+            document.getElementById('t-file-name').innerText = fileName;
+        });
 
         function getSelectedPet() {
             try {
