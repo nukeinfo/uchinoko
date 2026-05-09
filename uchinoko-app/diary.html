@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>うちの子 - 日記</title>
     <style>
         *, *::before, *::after { box-sizing: border-box; }
@@ -34,7 +37,7 @@
         <textarea id="logText"></textarea>
         <button id="mainBtn" class="save-btn"></button>
     </div>
-    <div id="diaryList">　</div>
+    <div id="diaryList"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
@@ -52,77 +55,53 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // 翻訳
         const i18n = {
             ja: {
-                back: '← 戻る',
-                title: '日々の記録（日記）',
-                timeLabel: '日時',
-                eventLabel: 'できごと',
-                placeholder: '例：ごはんを完食した。',
-                saveBtn: '記録を保存する',
-                updateBtn: '修正を反映する',
-                editBtn: '修正',
-                delBtn: '削除',
+                back: '← 戻る', title: '日々の記録（日記）', timeLabel: '日時',
+                eventLabel: 'できごと', placeholder: '例：ごはんを完食した。',
+                saveBtn: '記録を保存する', updateBtn: '修正を反映する',
+                editBtn: '修正', delBtn: '削除',
                 badge: (name) => `${name}の日記`,
                 noPet: '⚠️ ペットが選択されていません',
-                confirmDelete: '削除しますか？',
-                errorEmpty: '内容を入力してください',
-                errorNoPet: 'ペットを選択してください',
-                errorSave: 'エラーが発生しました',
+                confirmDelete: '削除しますか？', errorEmpty: '内容を入力してください',
+                errorNoPet: 'ペットを選択してください', errorSave: 'エラーが発生しました',
                 empty: 'まだ記録がありません'
             },
             en: {
-                back: '← Back',
-                title: 'Daily Diary',
-                timeLabel: 'Date & Time',
-                eventLabel: 'What happened',
-                placeholder: 'e.g. Finished all the food today!',
-                saveBtn: 'Save record',
-                updateBtn: 'Update record',
-                editBtn: 'Edit',
-                delBtn: 'Delete',
+                back: '← Back', title: 'Daily Diary', timeLabel: 'Date & Time',
+                eventLabel: 'What happened', placeholder: 'e.g. Finished all the food today!',
+                saveBtn: 'Save record', updateBtn: 'Update record',
+                editBtn: 'Edit', delBtn: 'Delete',
                 badge: (name) => `${name}'s diary`,
                 noPet: '⚠️ No pet selected',
-                confirmDelete: 'Delete this record?',
-                errorEmpty: 'Please enter some content',
-                errorNoPet: 'Please select a pet',
-                errorSave: 'An error occurred',
+                confirmDelete: 'Delete this record?', errorEmpty: 'Please enter some content',
+                errorNoPet: 'Please select a pet', errorSave: 'An error occurred',
                 empty: 'No records yet'
             },
             es: {
-                back: '← Volver',
-                title: 'Diario diario',
-                timeLabel: 'Fecha y hora',
-                eventLabel: '¿Qué pasó?',
-                placeholder: 'Ej: Comió todo su alimento hoy.',
-                saveBtn: 'Guardar registro',
-                updateBtn: 'Actualizar registro',
-                editBtn: 'Editar',
-                delBtn: 'Eliminar',
+                back: '← Volver', title: 'Diario', timeLabel: 'Fecha y hora',
+                eventLabel: '¿Qué pasó?', placeholder: 'Ej: Comió todo su alimento hoy.',
+                saveBtn: 'Guardar registro', updateBtn: 'Actualizar registro',
+                editBtn: 'Editar', delBtn: 'Eliminar',
                 badge: (name) => `Diario de ${name}`,
                 noPet: '⚠️ No hay mascota seleccionada',
-                confirmDelete: '¿Eliminar este registro?',
-                errorEmpty: 'Por favor ingresa contenido',
-                errorNoPet: 'Por favor selecciona una mascota',
-                errorSave: 'Ocurrió un error',
+                confirmDelete: '¿Eliminar este registro?', errorEmpty: 'Por favor ingresa contenido',
+                errorNoPet: 'Por favor selecciona una mascota', errorSave: 'Ocurrió un error',
                 empty: 'Aún no hay registros'
             }
         };
 
         const lang = localStorage.getItem('uchinoko_lang') || 'ja';
         const t = i18n[lang];
+        document.documentElement.lang = lang;
 
-        // テキスト適用
         document.getElementById('t-back').innerText = t.back;
         document.getElementById('t-title').innerText = t.title;
         document.getElementById('t-time-label').innerText = t.timeLabel;
         document.getElementById('t-event-label').innerText = t.eventLabel;
         document.getElementById('logText').placeholder = t.placeholder;
         document.getElementById('mainBtn').innerText = t.saveBtn;
-        document.documentElement.lang = lang;
 
-        // ペット情報取得
         function getSelectedPet() {
             try {
                 const pets = JSON.parse(localStorage.getItem('uchinoko_pets')) || [];
@@ -162,12 +141,7 @@
             if (!textInput.value) return alert(t.errorEmpty);
             if (!pet) return alert(t.errorNoPet);
             try {
-                const data = {
-                    time: timeInput.value,
-                    text: textInput.value,
-                    petId: pet.id,
-                    petName: pet.name
-                };
+                const data = { time: timeInput.value, text: textInput.value, petId: pet.id, petName: pet.name };
                 if (editId) {
                     await updateDoc(doc(db, "pet_diary", editId), data);
                 } else {
@@ -219,9 +193,9 @@
         loadDiary();
         resetUI();
     </script>
-<div style="text-align:center; margin-top:20px; padding-bottom:20px;">
-    <span style="display:block; color:#888; font-size:13px; font-weight:bold;">© T.K.C.</span>
-    <small style="color:#666; font-size:10px; letter-spacing:0.5px;">True Kind Care for all the loved ones</small>
-</div>
+    <div style="text-align:center; margin-top:20px; padding-bottom:20px;">
+        <span style="display:block; color:#888; font-size:13px; font-weight:bold;">© T.K.C.</span>
+        <small style="color:#666; font-size:10px; letter-spacing:0.5px;">True Kind Care for all the loved ones</small>
+    </div>
 </body>
 </html>
