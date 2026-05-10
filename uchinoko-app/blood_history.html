@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>うちの子 - 血液検査履歴</title>
     <style>
         *, *::before, *::after { box-sizing: border-box; }
@@ -55,19 +58,16 @@
 
     var i18n = {
         ja: {
-            back: '← 戻る',
-            title: '📋 血液検査履歴',
-            loading: '読み込み中...',
-            noData: 'まだ記録がありません',
+            back: '← 戻る', title: '📋 血液検査履歴',
+            loading: '読み込み中...', noData: 'まだ記録がありません',
             loadError: '読み込みに失敗しました',
             editHint: '✏️ 数値をタップすると編集できます',
-            saveBtn: '💾 修正を保存する',
-            deleteBtn: '🗑 この記録を削除する',
-            confirmDelete: (date) => date + ' の記録を削除しますか？',
+            saveBtn: '💾 修正を保存する', deleteBtn: '🗑 この記録を削除する',
+            confirmDelete: function(date) { return date + ' の記録を削除しますか？'; },
             saved: '保存しました！',
-            saveError: (msg) => '保存に失敗しました: ' + msg,
-            deleteError: (msg) => '削除に失敗しました: ' + msg,
-            badge: (name) => name + 'の血液検査履歴',
+            saveError: function(msg) { return '保存に失敗しました: ' + msg; },
+            deleteError: function(msg) { return '削除に失敗しました: ' + msg; },
+            badge: function(name) { return name + 'の血液検査履歴'; },
             group1: '赤血球系（貧血の評価）',
             group2: '白血球系（免疫の評価）',
             group3: '血小板（止血）',
@@ -84,19 +84,16 @@
             }
         },
         en: {
-            back: '← Back',
-            title: '📋 Blood Test History',
-            loading: 'Loading...',
-            noData: 'No records yet',
+            back: '← Back', title: '📋 Blood Test History',
+            loading: 'Loading...', noData: 'No records yet',
             loadError: 'Failed to load records',
             editHint: '✏️ Tap a value to edit it',
-            saveBtn: '💾 Save changes',
-            deleteBtn: '🗑 Delete this record',
-            confirmDelete: (date) => 'Delete record from ' + date + '?',
+            saveBtn: '💾 Save changes', deleteBtn: '🗑 Delete this record',
+            confirmDelete: function(date) { return 'Delete record from ' + date + '?'; },
             saved: 'Saved!',
-            saveError: (msg) => 'Failed to save: ' + msg,
-            deleteError: (msg) => 'Failed to delete: ' + msg,
-            badge: (name) => name + "'s blood test history",
+            saveError: function(msg) { return 'Failed to save: ' + msg; },
+            deleteError: function(msg) { return 'Failed to delete: ' + msg; },
+            badge: function(name) { return name + "'s blood test history"; },
             group1: 'Red Blood Cells (Anemia)',
             group2: 'White Blood Cells (Immunity)',
             group3: 'Platelets (Clotting)',
@@ -113,19 +110,16 @@
             }
         },
         es: {
-            back: '← Volver',
-            title: '📋 Historial de Análisis de Sangre',
-            loading: 'Cargando...',
-            noData: 'Aún no hay registros',
+            back: '← Volver', title: '📋 Historial de Análisis de Sangre',
+            loading: 'Cargando...', noData: 'Aún no hay registros',
             loadError: 'Error al cargar registros',
             editHint: '✏️ Toca un valor para editarlo',
-            saveBtn: '💾 Guardar cambios',
-            deleteBtn: '🗑 Eliminar este registro',
-            confirmDelete: (date) => '¿Eliminar registro del ' + date + '?',
+            saveBtn: '💾 Guardar cambios', deleteBtn: '🗑 Eliminar este registro',
+            confirmDelete: function(date) { return '¿Eliminar registro del ' + date + '?'; },
             saved: '¡Guardado!',
-            saveError: (msg) => 'Error al guardar: ' + msg,
-            deleteError: (msg) => 'Error al eliminar: ' + msg,
-            badge: (name) => 'Historial de ' + name,
+            saveError: function(msg) { return 'Error al guardar: ' + msg; },
+            deleteError: function(msg) { return 'Error al eliminar: ' + msg; },
+            badge: function(name) { return 'Historial de ' + name; },
             group1: 'Glóbulos Rojos (Anemia)',
             group2: 'Glóbulos Blancos (Inmunidad)',
             group3: 'Plaquetas (Coagulación)',
@@ -145,7 +139,6 @@
 
     var t = i18n[lang];
 
-    // ペット情報取得
     function getSelectedPet() {
         try {
             var pets = JSON.parse(localStorage.getItem('uchinoko_pets')) || [];
@@ -232,40 +225,33 @@
 
                     grp.keys.forEach(function(key) {
                         if (!d[key] && d[key] !== 0) return;
-
                         var row = document.createElement('div');
                         row.className = 'detail-row';
-
                         var label = document.createElement('span');
                         label.className = 'detail-label';
                         label.innerText = t.labels[key] || key;
-
                         var valueSpan = document.createElement('span');
                         valueSpan.className = 'detail-value';
                         valueSpan.innerText = d[key];
                         valueSpan.id = 'val_' + id + '_' + key;
-
                         var input = document.createElement('input');
                         input.type = 'number';
                         input.className = 'detail-input';
                         input.value = d[key];
                         input.id = 'inp_' + id + '_' + key;
                         input.step = '0.01';
-
                         valueSpan.onclick = function() {
                             valueSpan.style.display = 'none';
                             input.style.display = 'inline-block';
                             input.focus();
                             document.getElementById(saveBtnId).style.display = 'block';
                         };
-
                         input.onblur = function() {
                             var newVal = input.value;
                             if (newVal !== '') valueSpan.innerText = newVal;
                             valueSpan.style.display = 'inline-block';
                             input.style.display = 'none';
                         };
-
                         row.appendChild(label);
                         row.appendChild(valueSpan);
                         row.appendChild(input);
@@ -321,9 +307,9 @@
 
     loadList();
 </script>
-<div style="text-align:center; margin-top:20px; padding-bottom:20px;">
-    <span style="display:block; color:#888; font-size:13px; font-weight:bold;">© T.K.C.</span>
-    <small style="color:#666; font-size:10px; letter-spacing:0.5px;">True Kind Care for all the loved ones</small>
-</div>
+    <div style="text-align:center; margin-top:20px; padding-bottom:20px;">
+        <span style="display:block; color:#888; font-size:13px; font-weight:bold;">© T.K.C.</span>
+        <small style="color:#666; font-size:10px; letter-spacing:0.5px;">True Kind Care for all the loved ones</small>
+    </div>
 </body>
 </html>
