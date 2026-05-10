@@ -93,6 +93,7 @@
 
         const lang = localStorage.getItem('uchinoko_lang') || 'ja';
         const t = i18n[lang];
+        const familyId = localStorage.getItem('uchinoko_family_id');
         document.documentElement.lang = lang;
 
         document.getElementById('t-back').innerText = t.back;
@@ -141,7 +142,13 @@
             if (!textInput.value) return alert(t.errorEmpty);
             if (!pet) return alert(t.errorNoPet);
             try {
-                const data = { time: timeInput.value, text: textInput.value, petId: pet.id, petName: pet.name };
+                const data = {
+                    time: timeInput.value,
+                    text: textInput.value,
+                    petId: pet.id,
+                    petName: pet.name,
+                    familyId: familyId || ''
+                };
                 if (editId) {
                     await updateDoc(doc(db, "pet_diary", editId), data);
                 } else {
@@ -159,7 +166,15 @@
                 let count = 0;
                 snapshot.forEach((d) => {
                     const data = d.data();
-                    if (data.petId && pet && data.petId !== pet.id) return;
+
+                    // familyIdでフィルタ（新システム）
+                    if (familyId) {
+                        if (data.familyId && data.familyId !== familyId) return;
+                    } else {
+                        // 旧システム互換
+                        if (data.petId && pet && data.petId !== pet.id) return;
+                    }
+
                     count++;
                     const id = d.id;
                     const item = document.createElement('div');
