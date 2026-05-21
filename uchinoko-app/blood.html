@@ -42,10 +42,8 @@
     <div class="ocr-box">
         <label style="font-weight:bold;" id="t-ocr-label"></label>
         <div style="display:flex; gap:8px; margin-top:10px;">
-            <!-- カメラ：カスタムボタン -->
             <input type="file" id="ocr-camera" accept="image/*" capture="environment" style="display:none;">
             <button class="ocr-btn-label ocr-select-btn" onclick="document.getElementById('ocr-camera').click()" id="t-camera"></button>
-            <!-- ギャラリー：カスタムボタン -->
             <input type="file" id="ocr-gallery" accept="image/*" multiple style="display:none;">
             <button class="ocr-btn-label ocr-gallery-btn" onclick="document.getElementById('ocr-gallery').click()" id="t-gallery"></button>
         </div>
@@ -67,7 +65,7 @@
         <div class="test-row"><span class="test-label" onclick="showDict('MCHC')" id="l-MCHC"></span><input type="number" id="valMCHC" class="test-input" step="0.1"></div>
         <div class="test-row"><span class="test-label" onclick="showDict('RDW')" id="l-RDW"></span><input type="number" id="valRDW" class="test-input" step="0.1"></div>
         <div class="test-row"><span class="test-label" onclick="showDict('PRET')" id="l-PRET"></span><input type="number" id="valPRET" class="test-input" step="0.1"></div>
-        <div class="test-row"><span class="test-label" onclick="showDict('RET')" id="l-RET"></span><input type="number" id="valRET" class="test-input" step="0.1"></div>
+        <div class="test-row"><span class="test-label" onclick="showDict('RET')" id="l-RET"></span><input type="number" id="valRET" class="test-input"></div>
         <div class="test-row"><span class="test-label" onclick="showDict('RETICHGB')" id="l-RETICHGB"></span><input type="number" id="valRETICHGB" class="test-input" step="0.1"></div>
 
         <div class="group-title" id="t-group2"></div>
@@ -292,7 +290,7 @@
                     reader.onload = e => resolve(e.target.result.split(',')[1]);
                     reader.readAsDataURL(file);
                 });
-                const response = await fetch('https://chimerical-cheesecake-ef22ef.netlify.app/.netlify/functions/ocr', {
+                const response = await fetch('https://ocr-q3maqgrt7q-uc.a.run.app', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ imageBase64: base64, mediaType: file.type || 'image/jpeg' })
